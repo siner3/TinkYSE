@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/public_html/
+    - /usr/bin/rsync -av --exclude='.git' --delete $PWD/ $DEPLOYPATH
