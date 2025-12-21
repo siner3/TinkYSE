@@ -1,0 +1,70 @@
+/* --- DESIGNER CARD UPDATES --- */
+.designer-card {
+	background: #ffffff;
+	border: 1px solid #e5e5e5;
+	text-align: center;
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+	border-radius: 6px;
+	text-decoration: none;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.designer-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+	border-color: #d4af37;
+}
+
+/* 2x2 Preview Grid */
+.designer-preview {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 2px;
+	aspect-ratio: 1 / 1; /* Makes the whole preview area a square */
+	width: 100%;
+	background: #f4f4f4;
+}
+
+.designer-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: opacity 0.3s;
+}
+
+/* Empty slot placeholder */
+.preview-placeholder {
+	background-color: #f0f0f0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #ddd;
+}
+
+/* Text Content at bottom */
+.designer-info {
+	padding: 20px 15px;
+	border-top: 1px solid #f0f0f0;
+}
+
+.designer-name {
+	font-family: var(--font-serif);
+	font-size: 1.1rem;
+	color: #1a1a1a;
+	margin: 0 0 5px;
+	letter-spacing: 1px;
+}
+
+.item-count {
+	font-family: var(--font-sans);
+	font-size: 0.8rem;
+	color: #888;
+	text-transform: uppercase;
+}

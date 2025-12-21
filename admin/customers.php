@@ -59,7 +59,7 @@ $sql = "
     SELECT 
         c.*,
         COUNT(o.ORDER_ID) as total_orders,
-        COALESCE(SUM(o.ORDER_TOTALAMOUNT), 0) as total_spent,
+        COALESCE(SUM(o.ORDER_TOTAL), 0) as total_spent,
         MAX(o.ORDER_DATE) as last_order_date
     FROM CUSTOMER c
     LEFT JOIN `ORDER` o ON c.CUSTOMER_ID = o.CUSTOMER_ID
@@ -456,7 +456,7 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
                                     <small style="color:var(--text-light);">${timeStr}</small>
                                 </td>
                                 <td><span class="status-badge ${order.ORDER_STATUS.toLowerCase()}">${order.ORDER_STATUS}</span></td>
-                                <td style="text-align: right; font-weight:600;">$${parseFloat(order.ORDER_TOTALAMOUNT).toFixed(2)}</td>
+                                <td style="text-align: right; font-weight:600;">$${parseFloat(order.ORDER_TOTAL).toFixed(2)}</td>
                             </tr>
                         `;
                             list.innerHTML += row;

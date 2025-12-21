@@ -81,7 +81,7 @@ $stats = $pdo->query("SELECT
         COUNT(*) as total,
         SUM(CASE WHEN ORDER_STATUS = 'pending' THEN 1 ELSE 0 END) as pending,
         SUM(CASE WHEN ORDER_STATUS = 'completed' THEN 1 ELSE 0 END) as completed,
-        SUM(ORDER_TOTALAMOUNT) as revenue
+        SUM(ORDER_TOTAL) as revenue
     FROM `ORDER`")->fetch(PDO::FETCH_ASSOC);
 ?>
 
@@ -269,7 +269,7 @@ $stats = $pdo->query("SELECT
                                 <td data-label="Date"><?php echo date('d M Y, h:i A', strtotime($order['ORDER_DATE'])); ?></td>
                                 <td data-label="Items"><?php echo $order['item_count'] ?? 0; ?> items</td>
                                 <td data-label="Total"><strong>RM
-                                        <?php echo number_format($order['ORDER_TOTALAMOUNT'], 2); ?></strong></td>
+                                        <?php echo number_format($order['ORDER_TOTAL'], 2); ?></strong></td>
                                 <td data-label="Status"><span
                                         class="status-badge <?php echo strtolower($order['ORDER_STATUS']); ?>"><?php echo ucfirst($order['ORDER_STATUS']); ?></span>
                                 </td>
@@ -400,7 +400,7 @@ $stats = $pdo->query("SELECT
                     document.getElementById('modalCustomer').innerText = data.order.CUSTOMER_NAME || 'Unknown';
                     document.getElementById('modalDate').innerText = new Date(data.order.ORDER_DATE)
                         .toLocaleDateString() + ' ' + new Date(data.order.ORDER_DATE).toLocaleTimeString();
-                    document.getElementById('modalTotal').innerText = 'RM ' + parseFloat(data.order.ORDER_TOTALAMOUNT)
+                    document.getElementById('modalTotal').innerText = 'RM ' + parseFloat(data.order.ORDER_TOTAL)
                         .toFixed(2);
                     document.getElementById('modalStatusSelect').value = data.order.ORDER_STATUS;
 

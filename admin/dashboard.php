@@ -9,13 +9,14 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 require_once '../config.php'; // Your database connection
+
 // --- 1. FETCH DATA FOR WIDGETS ---
 
 // KPI 1: Total Revenue (Successful payments)
 $stmt = $pdo->query("
     SELECT SUM(PAYMENT_AMOUNT) as total 
     FROM PAYMENT 
-    WHERE PAYMENT_STATUS = 'successful'
+    WHERE PAYMENT_STATUS = 'successful' OR PAYMENT_STATUS = 'completed'
 ");
 $revenue = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
@@ -32,12 +33,12 @@ $stmt = $pdo->query("SELECT COUNT(*) as total FROM ITEM WHERE ITEM_STOCK <= 15")
 $lowStock = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
 // --- 2. FETCH DATA FOR TABLE (Recent Orders) ---
-// OPTIMIZED: Direct join using CUSTOMER_ID (fixed database issue)
+// FIXED: Changed ORDER_TOTALAMOUNT to ORDER_TOTAL to match your database
 $sql = "SELECT 
             o.ORDER_ID, 
             c.CUSTOMER_NAME, 
             c.CUSTOMER_EMAIL, 
-            o.ORDER_TOTALAMOUNT, 
+            o.ORDER_TOTAL, 
             o.ORDER_STATUS,
             o.ORDER_DATE
         FROM `ORDER` o
@@ -53,7 +54,7 @@ $chartSql = "SELECT
                 SUM(p.PAYMENT_AMOUNT) as revenue
             FROM `ORDER` o
             LEFT JOIN PAYMENT p ON o.ORDER_ID = p.ORDER_ID 
-            WHERE p.PAYMENT_STATUS = 'successful'
+            WHERE p.PAYMENT_STATUS = 'successful' OR p.PAYMENT_STATUS = 'completed'
             GROUP BY DATE_FORMAT(o.ORDER_DATE, '%Y-%m')
             ORDER BY month DESC
             LIMIT 12";
@@ -112,7 +113,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
 
 <body>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
@@ -158,7 +158,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                 <li>
                     <a href="/admin/catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
-                            <!--Boxicons v3.0.6 https://boxicons.com | License  https://docs.boxicons.com/free-->
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
                             </path>
@@ -177,7 +176,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
         </nav>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
         <header>
             <h2>Dashboard</h2>
@@ -187,9 +185,7 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </header>
 
-        <!-- KPI CARDS (Stats Grid) -->
         <div class="stats-grid">
-            <!-- Total Revenue -->
             <div class="stat-card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -202,7 +198,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Total Orders -->
             <div class="stat-card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -216,7 +211,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Total Customers -->
             <div class="stat-card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -230,7 +224,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Low Stock Alert -->
             <div class="stat-card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -247,9 +240,7 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- CHARTS SECTION -->
         <div class="charts-grid">
-            <!-- Revenue Chart -->
             <div class="card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -262,7 +253,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Order Status Chart -->
             <div class="card">
                 <div class="card-header">
                     <div class="stat-label">
@@ -276,7 +266,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- TABLE SECTION -->
         <div class="table-section">
             <div class="table-header">
                 <h3>Recent Orders</h3>
@@ -311,7 +300,7 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                                     <?php echo htmlspecialchars($order['CUSTOMER_EMAIL']); ?>
                                 </td>
                                 <td data-label="Total Amount">
-                                    <strong>RM <?php echo number_format($order['ORDER_TOTALAMOUNT'], 2); ?></strong>
+                                    <strong>RM <?php echo number_format($order['ORDER_TOTAL'], 2); ?></strong>
                                 </td>
                                 <td data-label="Status">
                                     <span class="status-badge <?php echo strtolower($order['ORDER_STATUS']); ?>">
@@ -336,7 +325,6 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </main>
 
-    <!-- CHART SCRIPTS -->
     <script>
         // Prepare data from PHP
         const revenueData = <?php echo json_encode($revenueByMonth); ?>;

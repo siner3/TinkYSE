@@ -2,30 +2,31 @@
 
 /**
  * Header Component – TINK
- * - Dynamic navigation using associative array
- * - Active link determined server-side
- * - Reusable across all public pages
- * - Uses existing TINK CSS styles only
+ * - Dynamic navigation pointing to master catalog.php
+ * - Highlights active link based on URL category parameter
+ * - Includes Live Search functionality
  */
 
-// Detect current page
+// 1. Detect current page (e.g., 'catalog.php')
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-// Navigation configuration (easy to scale)
-$navItems = [
-    'bracelets.php' => 'BRACELETS',
-    'necklaces.php' => 'NECKLACES',
-    'earrings.php'  => 'EARRINGS',
-    'rings.php'     => 'RINGS',
-    'charms.php'    => 'CHARMS',
-    'designers.php' => 'DESIGNERS'
+// 2. Detect current category from URL (e.g., 'Necklaces')
+$currentCat = isset($_GET['cat']) ? $_GET['cat'] : '';
+
+// 3. Navigation Map
+$navCategories = [
+    'BRACELETS' => 'Bracelets',
+    'NECKLACES' => 'Necklaces',
+    'EARRINGS'  => 'Earrings',
+    'RINGS'     => 'Rings',
+    'CHARMS'    => 'Charms'
 ];
 ?>
 
-<!-- ===== Site Header ===== -->
+
 <header class="site-header">
     <div class="header-container">
-        <!-- Logo -->
+
         <div class="logo">
             <a href="index.php">
                 <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
@@ -54,7 +55,7 @@ $navItems = [
                     <path class="cls-1"
                         d="M199.23,111.1c0,.2-.1.38-.25.47-.48.38-1.01.82-1.59,1.28-.26.18-.54.38-.8.57-.71.53-1.48,1.06-2.28,1.59-.38.25-.76.49-1.15.73-3.31,2.04-7.06,3.8-10.27,3.8-6.75,0-11.59-5.28-11.81-11.28v-23.93c0-5.64-2.25-9.16-6.51-9.16-3.63,0-5.65,1.91-8.27,4.3v26.07c.29,5,2.5,8.07,6.49,8.07,3.09,0,4.82-1.22,6.94-3.11.1-.07.21-.12.33-.12.31,0,.55.26.55.58,0,.19-.09.35-.23.46h0c-3.72,2.97-10.76,8.06-16.25,8.06-6.74,0-11.59-5.28-11.81-11.28v-24.56c-.07-1.19-.3-2.39-.78-3.45,3.45-1.15,5.27-5.13,5.27-5.13,0,0,0-.01-.01-.02.1-.27.38-1.12.54-2.26,4.77-1.74,8.29-3.5,8.29-3.5h.67v8.61c3.48-2.84,11.08-8.6,16.93-8.6,6.75,0,11.59,5.28,11.81,11.28v17.34h-.01v6.59c0,5.64,2.25,9.16,6.52,9.16,2.07,0,3.62-.63,5.05-1.6.36-.24.71-.52,1.09-.83l.68-.57h.01c.1-.08.19-.12.31-.12.31,0,.55.26.55.56Z" />
                     <path class="cls-1"
-                        d="M146.66,67.66c-1.72-3.43-6.09-4.94-6.09-4.94,0,0-.1.25-.22.65-.37-.16-.6-.25-.6-.25,0,0-1.6,4.05.12,7.49.33.66.76,1.26,1.24,1.77-.72-.13-1.46-.18-2.21-.08-3.9.52-6.41,4.66-6.41,4.66,0,0,.34.29.93.69-.25.45-.38.74-.38.74,0,0,2.12,1.48,4.73,2,1.04.21,2.16.26,3.25-.01.19-.04.36-.1.54-.17,3.45-1.15,5.27-5.13,5.27-5.13,0,0,0-.01-.01-.02.1-.27.38-1.12.54-2.26.2-1.46.2-3.37-.68-5.13ZM140.51,70.33c-.96-1.96-.76-4.19-.46-5.59-.24,1.49-.31,3.58.64,5.46.54,1.09,1.35,1.97,2.18,2.68-.13-.04-.26-.09-.39-.15-.78-.64-1.48-1.43-1.96-2.4ZM133.53,76.82c.78-1.05,2.76-3.41,5.45-3.78.02-.01.03-.01.05-.01.02-.01.04-.01.08,0-.04,0-.09,0-.13.01-.05.01-.1.02-.14.03-2.42.58-4.11,2.57-5.02,3.95-.11-.07-.2-.13-.29-.2ZM145.71,75.46c-.66,1.12-2.17,3.28-4.42,4.06-.03.01-.05.02-.09.03-.12.03-.24.08-.37.1,0,.01-.01.01-.01.01h-.02c-.13.03-.26.07-.39.08-.05.01-.12.02-.19.03h-.1s-.08.01-.1.01c-.01,0-.02.01-.03,0-.16.02-.32.03-.47.03-.07,0-.13.01-.19,0-.1-.01-.2-.01-.32-.01-.11,0-.21-.01-.32-.02h-.02c-.25-.02-.5-.07-.76-.11t-.02-.01c-.19-.03-.36-.08-.53-.12-.19-.04-.36-.09-.54-.16-1.18-.36-2.2-.89-2.78-1.23.01-.02.02-.03.04-.06h0c.1-.19.22-.4.38-.64.26-.4.61-.86,1.03-1.33.08-.09.16-.19.25-.28.84-.89,1.95-1.72,3.3-2.04.87-.2,1.83-.2,2.89,0,.43.09.84.2,1.24.34.02.01.03.01.05.02.82.26,1.55.61,2.09.9t.01.01c.18.09.33.17.45.25-.02.04-.05.09-.09.15ZM145.57,74.32h.01s.07.03.1.06c-.04-.01-.07-.02-.11-.06ZM146.2,74.76c-.14-.11-.31-.22-.5-.36.2.1.37.2.53.29-.02.02-.02.04-.02.07ZM146.42,73.79h0c-.04.18-.08.33-.11.45-.19-.09-.41-.19-.65-.31-.19-.1-.38-.21-.6-.34-1.27-.74-2.88-1.94-3.73-3.65-.98-1.96-.77-4.18-.47-5.58.05-.26.11-.48.16-.67v-.04c1.24.56,3.82,1.95,4.98,4.3.89,1.77.8,3.74.56,5.13-.04.26-.09.5-.14.72Z" />
+                        d="M146.66,67.66c-1.72-3.43-6.09-4.94-6.09-4.94,0,0-.1.25-.22.65-.37-.16-.6-.25-.6-.25,0,0-1.6,4.05.12,7.49.33.66.76,1.26,1.24,1.77-.72-.13-1.46-.18-2.21-.08-3.9.52-6.41,4.66-6.41,4.66,0,0,.34.29.93.69-.25.45-.38.74-.38.74,0,0,2.12,1.48,4.73,2,1.04.21,2.16.26,3.25-.01.19-.04.36-.1.54-.17,3.45-1.15,5.27-5.13,5.27-5.13,0,0,0-.01-.01-.02.1-.27.38-1.12.54-2.26.2-1.46.2-3.37-.68-5.13ZM140.51,70.33c-.96-1.96-.76-4.19-.46-5.59-.24,1.49-.31,3.58.64,5.46.54,1.09,1.35,1.97,2.18,2.68-.13-.04-.26-.09-.39-.15-.78-.64-1.48-1.43-1.96-2.4ZM133.53,76.82c.78-1.05,2.76-3.41,5.45-3.78.02-.01.03-.01.05-.01.02-.01.08,0-.04,0-.09,0-.13.01-.05.01-.1.02-.14.03-2.42.58-4.11,2.57-5.02,3.95-.11-.07-.2-.13-.29-.2ZM145.71,75.46c-.66,1.12-2.17,3.28-4.42,4.06-.03.01-.05.02-.09.03-.12.03-.24.08-.37.1,0,.01-.01.01-.01.01h-.02c-.13.03-.26.07-.39.08-.05.01-.12.02-.19.03h-.1s-.08.01-.1.01c-.01,0-.02.01-.03,0-.16.02-.32.03-.47.03-.07,0-.13.01-.19,0-.1-.01-.2-.01-.32-.01-.11,0-.21-.01-.32-.02h-.02c-.25-.02-.5-.07-.76-.11t-.02-.01c-.19-.03-.36-.08-.53-.12-.19-.04-.36-.09-.54-.16-1.18-.36-2.2-.89-2.78-1.23.01-.02.02-.03.04-.06h0c.1-.19.22-.4.38-.64.26-.4.61-.86,1.03-1.33.08-.09.16-.19.25-.28.84-.89,1.95-1.72,3.3-2.04.87-.2,1.83-.2,2.89,0,.43.09.84.2,1.24.34.02.01.03.01.05.02.82.26,1.55.61,2.09.9t.01.01c.18.09.33.17.45.25-.02.04-.05.09-.09.15ZM145.57,74.32h.01s.07.03.1.06c-.04-.01-.07-.02-.11-.06ZM146.2,74.76c-.14-.11-.31-.22-.5-.36.2.1.37.2.53.29-.02.02-.02.04-.02.07ZM146.42,73.79h0c-.04.18-.08.33-.11.45-.19-.09-.41-.19-.65-.31-.19-.1-.38-.21-.6-.34-1.27-.74-2.88-1.94-3.73-3.65-.98-1.96-.77-4.18-.47-5.58.05-.26.11-.48.16-.67v-.04c1.24.56,3.82,1.95,4.98,4.3.89,1.77.8,3.74.56,5.13-.04.26-.09.5-.14.72Z" />
                     <path class="cls-1"
                         d="M44.64,60.23c.07.09.14.16.23.23-.08.07-.16.14-.23.23-.07-.09-.14-.16-.23-.23.08-.07.16-.14.23-.23M44.65,64.97l.16.05c.26.08.43.31.43.58s-.17.5-.43.58l-.16.05-.16-.05c-.26-.08-.43-.31-.43-.58s.17-.5.43-.58l.16-.05M44.65,69.44l.16.05c.26.08.43.31.43.58s-.17.5-.43.58l-.16.05-.16-.05c-.26-.08-.43-.31-.43-.58s.17-.5.43-.58l.16-.05M44.64,76.64c.23.47.54.78.93.99-.42.22-.71.54-.93.99-.21-.45-.51-.77-.93-.99.39-.21.7-.52.93-.99M44.65,54.73c-.18,0-.33.15-.33.34v4.64c-.21.41-.56.58-1.21.66-.11.01-.11.17,0,.19.65.09,1.01.26,1.21.66v3.27c-.47.15-.82.58-.82,1.11s.35.96.82,1.11v2.26c-.47.15-.82.58-.82,1.11s.35.96.82,1.11v4.72c-.28,1.04-.83,1.41-2.04,1.58-.17.02-.17.28,0,.31,1.59.23,2.04.78,2.23,2.73,0,.09.07.13.13.13s.12-.04.13-.13c.19-1.95.64-2.5,2.23-2.73.17-.02.17-.28,0-.31-1.18-.17-1.74-.52-2.02-1.5v-4.8c.47-.15.82-.58.82-1.11s-.35-.96-.82-1.11v-2.26c.47-.15.82-.58.82-1.11s-.35-.96-.82-1.11v-3.3c.21-.38.56-.54,1.19-.63.11-.01.11-.17,0-.19-.63-.09-.98-.25-1.19-.63v-4.67c0-.19-.15-.34-.33-.34h0Z" />
                     <path class="cls-1"
@@ -65,37 +66,97 @@ $navItems = [
             </a>
         </div>
 
-        <!-- Main Navigation -->
         <nav class="main-nav">
-            <?php foreach ($navItems as $file => $label): ?>
-                <a href="<?= htmlspecialchars($file) ?>" class="nav-link <?= $currentPage === $file ? 'active' : '' ?>">
-                    <?= htmlspecialchars($label) ?>
+            <?php foreach ($navCategories as $label => $catSlug): ?>
+                <?php $isActive = ($currentPage == 'catalog.php' && $currentCat == $catSlug) ? 'active' : ''; ?>
+                <a href="catalog.php?cat=<?= $catSlug ?>" class="nav-link <?= $isActive ?>">
+                    <?= $label ?>
                 </a>
             <?php endforeach; ?>
+            <a href="designers.php"
+                class="nav-link <?= ($currentPage == 'designers.php') ? 'active' : '' ?>">DESIGNERS</a>
         </nav>
 
-        <!-- Right Section -->
         <div class="header-right">
-            <!-- Search -->
-            <div class="search-bar">
-                <input type="text" placeholder="Search our store" aria-label="Search products">
-                <i class="fa-solid fa-magnifying-glass"></i>
+
+            <div class="search-wrapper">
+                <form action="catalog.php" method="GET">
+                    <div class="search-bar">
+                        <input type="text" name="search" id="searchInput" placeholder="Search our store"
+                            aria-label="Search products" autocomplete="off">
+                        <button type="submit" style="background:none; border:none; cursor:pointer;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="searchResults" class="search-results-dropdown"></div>
             </div>
 
-            <!-- Icons -->
             <div class="icons">
-                <a href="cart.php" aria-label="View cart">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                </a>
-                <a href="account.php" aria-label="User account">
-                    <i class="fa-regular fa-user"></i>
-                </a>
+                <a href="cart.php" aria-label="View cart"><i class="fa-solid fa-bag-shopping"></i></a>
+                <a href="account.php" aria-label="User account"><i class="fa-regular fa-user"></i></a>
             </div>
         </div>
     </div>
 </header>
 
-<!-- ===== Top Banner ===== -->
 <div class="top-banner">
     Up To 30% OFF For Christmas Gift
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('searchResults');
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            // Hide if less than 2 chars
+            if (query.length < 2) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            // Wait 300ms before requesting (Debounce)
+            debounceTimer = setTimeout(() => {
+                fetch(`api/search.php?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+
+                        if (data.length > 0) {
+                            data.forEach(item => {
+                                const link = document.createElement('a');
+                                link.href = `product_detail.php?id=${item.ITEM_ID}`;
+                                link.className = 'search-item';
+                                link.innerHTML = `
+                                    <img src="${item.ITEM_IMAGE}" alt="${item.ITEM_NAME}">
+                                    <div class="search-info">
+                                        <span class="search-name">${item.ITEM_NAME}</span>
+                                        <span class="search-price">RM ${parseFloat(item.ITEM_PRICE).toFixed(2)}</span>
+                                    </div>
+                                `;
+                                resultsContainer.appendChild(link);
+                            });
+                        } else {
+                            resultsContainer.innerHTML =
+                                '<div class="no-results">No products found.</div>';
+                        }
+                        resultsContainer.style.display = 'block';
+                    })
+                    .catch(err => console.error('Error fetching search results:', err));
+            }, 300);
+        });
+
+        // Hide when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                resultsContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
