@@ -153,10 +153,10 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
         <nav>
             <ul>
                 <li class="active">
-                    <a href="/admin/dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
+                    <a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
                 </li>
                 <li>
-                    <a href="/admin/catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    <a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
@@ -164,13 +164,13 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                         </svg> <span>Items/Catalog</span></a>
                 </li>
                 <li>
-                    <a href="/admin/customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
+                    <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
                 </li>
                 <li>
-                    <a href="/admin/orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
+                    <a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
                 </li>
                 <li>
-                    <a href="/admin/designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
+                    <a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
                 </li>
             </ul>
         </nav>
