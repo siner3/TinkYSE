@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $final_gallery = json_decode($_POST['existing_gallery_images'], true) ?? [];
             }
 
-            $upload_dir = $_SERVER['DOCUMENT_ROOT'] . '/images/products/';
+            $upload_dir = __DIR__ . '/../images/products/';
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
