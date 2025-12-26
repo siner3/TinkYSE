@@ -1,0 +1,378 @@
+/* ===== Reset ===== */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: "Poppins", sans-serif;
+	background: #f8f4ec;
+	color: #1c1c1c;
+	line-height: 1.6;
+}
+
+/* ===== Typography ===== */
+h1,
+h2,
+h3,
+h4 {
+	font-family: "Playfair Display", serif;
+	font-weight: 400;
+	letter-spacing: 0.5px;
+}
+
+/* ===== Top Banner ===== */
+.top-banner {
+	background: #7fb3c8;
+	color: #fff;
+	text-align: center;
+	padding: 6px;
+	font-size: 14px;
+}
+
+/* ===== Header / Navbar ===== */
+
+/* ===== COMPONENT STYLES (Add to your main CSS) ===== */
+
+/* Header Container - Flexbox Layout */
+.header-container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 30px;
+	width: 100%;
+}
+
+/* Logo Styling */
+.logo {
+	flex-shrink: 0;
+}
+
+.logo a {
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	height: 50px;
+}
+
+/* SVG Logo */
+.logo svg,
+.logo img {
+	height: 50px;
+	width: auto;
+	display: block;
+}
+
+.logo h1 {
+	margin: 0;
+	color: #fff;
+	font-size: 28px;
+}
+
+/* Main Navigation */
+.main-nav {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	flex: 1;
+	margin: 0 20px;
+}
+
+/* Navigation Link Active State */
+nav a.active::after {
+	width: 100%;
+	background: #6fb6d9;
+}
+
+/* Adjust header display as flex */
+header {
+	position: absolute;
+	top: 30px;
+	width: 100%;
+	padding: 20px 35px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+/* Make header-right responsive */
+.header-right {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+	.header-container {
+		gap: 20px;
+	}
+
+	.main-nav {
+		gap: 15px;
+		margin: 0 15px;
+	}
+
+	.search-bar input {
+		width: 120px;
+	}
+
+	nav a {
+		margin: 0 10px;
+		font-size: 14px;
+	}
+}
+
+@media (max-width: 768px) {
+	.header-container {
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+
+	.main-nav {
+		display: none;
+	}
+
+	.search-bar {
+		display: none;
+	}
+
+	.header-right {
+		gap: 15px;
+	}
+
+	.icons {
+		gap: 15px;
+		font-size: 16px;
+	}
+
+	header {
+		padding: 15px 20px;
+		top: 0;
+	}
+
+	.logo h1 {
+		font-size: 22px;
+	}
+}
+
+@media (max-width: 480px) {
+	.header-right {
+		gap: 10px;
+	}
+
+	.icons {
+		gap: 12px;
+		font-size: 14px;
+	}
+
+	header {
+		padding: 12px 15px;
+	}
+}
+header {
+    position: absolute;
+    top: 30px;
+    width: 100%;
+    padding: 20px 35px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    z-index: 10;
+    background: transparent;
+}
+
+nav a {
+    display:inline-block;
+    margin: 0 15px;
+    text-decoration: none;
+    color: #fff;
+    font-size: 15px;
+    letter-spacing: 2px;
+    position: relative; 
+    padding-bottom: 10px;
+}
+
+/* Create the line but keep it at 0 width initially */
+nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 5px;
+    background: #6fb6d9;
+    transition: width 0.01s ease;
+}
+
+/* When the link is hovered, grow the pseudo-element line to 100% */
+nav a:hover::after {
+    width: 100%;
+}
+
+.header-right {
+	display: flex;
+	align-items: center;
+	gap: 18px; /* Space between search and icons */
+}
+
+.search-bar {
+	display: flex;
+	align-items: center;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.5); /* The thin line */
+	padding-bottom: 5px;
+	justify-content: space-between;
+	width: fit-content;
+	padding: 15px 20px;
+}
+
+.search-button {
+	background: transparent;
+	border: none;
+	color: #fff;
+	cursor: pointer;
+	font-size: 16px;
+	margin-right: 10px;
+	width: auto;
+}
+
+.search-bar input {
+	background: transparent;
+	border: none;
+	color: #fff;
+	outline: none;
+	font-size: 14px;
+	width: 150px;
+}
+
+.search-bar input::placeholder {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.icons {
+	display: flex;
+	gap: 20px;
+	font-size: 18px;
+	cursor: pointer;
+}
+
+.icons a {
+	text-decoration: none;
+	color: inherit;
+	display: inline-flex;
+}
+
+.icons a:hover i {
+	filter: brightness(1.5);
+	transform: scale(1.1);
+}
+
+.site-header {
+	position: absolute;
+	top: 30px;
+	width: 100%;
+	padding: 20px 35px;
+	z-index: 10;
+}
+
+/* ===== Buttons ===== */
+button {
+	background: #0b2239;
+	color: #fff;
+	border: none;
+	border-radius: 25px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-family: "Inter", sans-serif;
+	display: inline-block;
+	text-align: center;
+
+	letter-spacing: 2px;
+	text-transform: uppercase;
+}
+
+button:hover {
+	opacity: 0.85;
+	transform: translateY(-1px);
+}
+button:active {
+	color: rgba(228, 242, 249, 1);
+	transform: translateY(0);
+}
+
+/* ===== Footer ===== */
+.site-footer {
+    background: rgba(251, 244, 228, 1);
+    padding: 80px 8% 40px; 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* 1. Refined Headings */
+.site-footer h4 {
+	font-weight: 700;
+	font-size: 16px;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	margin-bottom: 25px;
+	color: #0b2239;
+}
+
+/* 2. Grid Layout */
+.footer-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 40px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+	padding-bottom: 50px;
+}
+
+/* 3. Links & Text */
+.footer-grid a,
+.footer-grid p {
+	color: #555;
+	text-decoration: none;
+	font-size: 14px;
+	line-height: 1.6;
+	margin-bottom: 12px;
+	display: block;
+	transition: color 0.3s ease;
+}
+
+/* 4. Link Hover Effect */
+.footer-grid a:hover {
+	color: #6fb6d9;
+	padding-left: 5px;
+}
+
+/* 5. Social Icons */
+.footer-social {
+	margin-top: 10px;
+}
+
+.footer-social i {
+	margin-right: 18px;
+	font-size: 20px;
+	color: #0b2239;
+	transition: transform 0.3s ease, color 0.3s ease;
+	cursor: pointer;
+}
+
+.footer-social i:hover {
+	color: #6fb6d9;
+	transform: translateY(-3px);
+}
+
+/* 6. Copyright Section */
+.footer-bottom {
+	text-align: center;
+	margin-top: 20px;
+	font-size: 12px;
+	color: #888;
+	letter-spacing: 1px;
+}

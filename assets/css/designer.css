@@ -1,0 +1,178 @@
+/* --- DESIGNERS PAGE CONTAINER --- */
+.designers-container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 40px 100px;
+}
+
+.designers-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 40px;
+}
+
+/* --- DESIGNER CARD --- */
+.designer-card {
+	background: #ffffff;
+	border: 1px solid #e5e5e5;
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+	border-radius: 6px;
+	text-decoration: none;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.designer-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+	border-color: #d4af37; /* Gold Highlight */
+}
+
+/* --- SMART IMAGE PREVIEW GRID --- */
+.designer-preview {
+	width: 100%;
+	aspect-ratio: 1 / 1; /* Forces a perfect square */
+	display: grid;
+	background: #f4f4f4;
+	overflow: hidden;
+	gap: 1px; /* Tiny gap between images */
+}
+
+.designer-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.6s ease;
+	display: block;
+}
+
+/* Zoom effect on hover */
+.designer-card:hover .designer-preview img {
+	transform: scale(1.08);
+}
+
+/* --- GRID LAYOUT VARIATIONS --- */
+/* These classes are applied by PHP based on item count */
+
+/* 1 Item: Full Size */
+.designer-preview.layout-1 {
+	grid-template-columns: 1fr;
+}
+
+/* 2 Items: Split Vertically */
+.designer-preview.layout-2 {
+	grid-template-columns: 1fr 1fr;
+}
+
+/* 3 Items: 2 on top, 1 big one on bottom */
+.designer-preview.layout-3 {
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+.designer-preview.layout-3 img:nth-child(3) {
+	grid-column: span 2; /* The 3rd image stretches across the bottom */
+}
+
+/* 4 Items: Standard 2x2 Grid */
+.designer-preview.layout-4 {
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+
+/* --- INFO SECTION --- */
+.designer-info {
+	padding: 20px 15px;
+	border-top: 1px solid #f0f0f0;
+	text-align: center;
+	background: white;
+	z-index: 2;
+	position: relative;
+	flex-grow: 1; /* Pushes content to fill height */
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.designer-name {
+	font-family: "Cinzel", serif; /* Ensure fonts match your theme */
+	font-size: 1.1rem;
+	color: #1a1a1a;
+	margin: 0 0 5px;
+	letter-spacing: 1px;
+}
+
+.item-count {
+	font-family: "Lato", sans-serif;
+	font-size: 0.8rem;
+	color: #888;
+	text-transform: uppercase;
+}
+
+/* Responsive Tweak */
+@media (max-width: 768px) {
+	.designers-grid {
+		grid-template-columns: 1fr;
+		padding: 0 20px;
+	}
+}
+
+/* --- HEADER (Compact) --- */
+.site-header {
+	background-color: #203742;
+	color: #fff;
+	padding: 15px 0;
+}
+
+/* --- HEADER (Compact) --- */
+.site-header {
+	background-color: #203742;
+	color: #fff;
+	padding: 15px 0;
+}
+.header-container {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 40px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.main-nav {
+	display: flex;
+	gap: 25px;
+}
+.nav-link {
+	color: #ccc;
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	letter-spacing: 1px;
+}
+.nav-link:hover,
+.nav-link.active {
+	color: #fff;
+}
+.header-right {
+	display: flex;
+	gap: 20px;
+	color: white;
+}
+
+/* --- PAGE TITLE --- */
+.page-title {
+	text-align: center;
+	padding: 50px 0 30px;
+	margin-top: 60px;
+}
+.page-title h1 {
+	font-family: var(--font-serif);
+	font-size: 3rem;
+	color: var(--text-slate);
+	font-weight: 400;
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+}

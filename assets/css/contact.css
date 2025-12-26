@@ -1,0 +1,249 @@
+.product-page header {
+    position: relative;
+    top: 0;
+    background-color:rgba(32, 55, 66, 1);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 8px 35px; 
+}
+
+.breadcrumb {
+    margin-left:60px;
+    margin-top: 40px;     /* 🔥 pushes content down */
+    margin-bottom: 40px;
+    font-size: 13px;
+    color: #777;
+}
+
+/* ====== LAYOUT ====== */
+.product-wrapper {
+
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 30px;
+    max-width: 1400px;
+    margin: auto;
+}
+
+/* ====== GALLERY ====== */
+.gallery {
+    display: flex;
+    gap: 30px;
+}
+
+.site-images {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.site-images img {
+    width: 199px;
+    height: 240px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.main-image img {
+    width: 620px;
+    border-radius: 10px;
+    height: 770px;
+}
+
+/* ====== INFO ====== */
+.info h1 {
+    font-size: 34px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.designer {
+    font-size: 14px;
+    color: #777;
+}
+
+.price {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 18px 0 25px;
+}
+
+/* ====== OPTIONS ====== */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.colors {
+    display: flex;
+    gap: 12px;
+}
+
+.color {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #aaa;
+}
+
+.color.silver { background: #cfc7c3; }
+.color.gold { background: #f5b400; }
+
+.color.active {
+    outline: 2px solid #000;
+}
+
+.size-guide {
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid #000;
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: #000;
+}
+
+/* ====== ENGRAVING ====== */
+.engrave {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.engrave-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 30px;
+}
+
+/* ====== CART ====== */
+.cart-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.qty-box {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.qty-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    background: transparent;
+    font-size: 17px;
+    cursor: pointer;
+    color: #000;
+}
+
+.qty-value {
+    width: 50px;
+    text-align: center;
+    font-size: 17px;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+}
+
+.add-btn {
+    flex: 1;
+    background: #000;
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+/* ====== DESCRIPTION ====== */
+.desc h3 {
+    margin: 10px 0 10px;
+    font-size: 17px;
+}
+
+.desc p,
+.desc li {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.6;
+    text-align:justify;
+}
+
+.desc li {
+    margin-left: 20px;
+}
+
+.section h2{
+    padding-left:50px;
+    margin: 20px;
+    font-weight: bold;
+}
+
+/* ===== Products ===== */
+.products {
+    display: grid;
+    grid-auto-flow: column;          
+    grid-auto-columns: calc((100% - 84px) / 4);
+    gap: 28px;
+    padding-left: 50px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+
+    scroll-snap-type: x mandatory;
+}
+
+.product {
+    width: 100%;
+    background: #fff;
+    border-radius: 14px;
+    padding: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    transition: 0.3s;
+}
+
+.products::-webkit-scrollbar {
+    height: 6px;
+}
+
+.products::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+
+.product:hover {
+    transform: translateY(-6px);
+    background: rgba(228, 242, 249, 1);
+}
+
+.product img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.product h4 {
+    margin: 12px 0 5px;
+    font-size: 20px;
+}
+
+.price {
+    font-size: 15px;
+    color: #555;
+}
+
+.material {
+    font-size: 15px;
+    color: #888;
+}

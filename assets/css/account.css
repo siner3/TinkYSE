@@ -1,0 +1,321 @@
+/* --- HEADER (Compact) --- */
+.site-header {
+	background-color: #203742;
+	color: #fff;
+	padding: 15px 0;
+}
+.header-container {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 40px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.main-nav {
+	display: flex;
+	gap: 25px;
+}
+.nav-link {
+	color: #ccc;
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	letter-spacing: 1px;
+}
+.nav-link:hover,
+.nav-link.active {
+	color: #fff;
+}
+.header-right {
+	display: flex;
+	gap: 20px;
+	color: white;
+}
+
+/* --- PAGE TITLE --- */
+.page-title {
+	text-align: center;
+	padding: 50px 0 30px;
+	margin-top: 60px;
+}
+.page-title h1 {
+	font-family: var(--font-serif);
+	font-size: 3rem;
+	color: var(--text-slate);
+	font-weight: 400;
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+}
+
+/* --- LAYOUT --- */
+.account-container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 60px 20px;
+	min-height: 80vh;
+	margin-top: 80px;
+}
+
+.account-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 1px solid #e5e5e5;
+	padding-bottom: 15px;
+	margin-bottom: 40px;
+}
+
+.page-title-small {
+	font-family: "Cinzel", serif;
+	font-size: 1.8rem;
+	color: #3a4b5f;
+	margin: 0;
+}
+
+.btn-logout {
+	font-family: "Lato", sans-serif;
+	font-size: 0.9rem;
+	color: #d9534f;
+	text-decoration: underline;
+}
+
+.account-grid {
+	display: grid;
+	grid-template-columns: 1fr 1.5fr; /* Left is smaller, Right is wider */
+	gap: 50px;
+}
+
+/* --- LEFT: PROFILE BOX --- */
+.info-box {
+	background: #fdfbf7;
+	border: 1px solid #e0e0e0;
+	padding: 30px;
+	border-radius: 4px;
+}
+
+.box-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 25px;
+}
+
+.box-header h3 {
+	font-family: "Cinzel", serif;
+	font-size: 1.2rem;
+	margin: 0;
+	color: #333;
+}
+
+.btn-edit {
+	background: none;
+	border: none;
+	text-decoration: underline;
+	cursor: pointer;
+	font-family: "Lato", sans-serif;
+	color: #666;
+}
+
+/* Detail Rows */
+.detail-row {
+	margin-bottom: 20px;
+	border-bottom: 1px solid #eee;
+	padding-bottom: 10px;
+}
+
+.detail-row:last-child {
+	border-bottom: none;
+}
+
+.detail-row .label {
+	display: block;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: #888;
+	font-weight: 700;
+	margin-bottom: 5px;
+}
+
+.detail-row .value {
+	font-family: "Lato", sans-serif;
+	color: #1a1a1a;
+	font-size: 1rem;
+}
+
+.address-text {
+	line-height: 1.6;
+	display: block;
+}
+
+/* Edit Form */
+.form-group {
+	margin-bottom: 15px;
+}
+
+.form-group label {
+	display: block;
+	font-size: 0.8rem;
+	margin-bottom: 5px;
+	color: #555;
+}
+
+.edit-form input,
+.edit-form textarea {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-family: "Lato", sans-serif;
+	box-sizing: border-box;
+}
+
+.form-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+}
+
+.btn-save {
+	background: #1a1a1a;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.btn-cancel {
+	background: white;
+	color: #333;
+	border: 1px solid #ccc;
+	padding: 10px 20px;
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+/* --- RIGHT: ORDER HISTORY --- */
+.orders-section h3 {
+	font-family: "Cinzel", serif;
+	font-size: 1.4rem;
+	margin-bottom: 25px;
+	color: #333;
+}
+
+.no-orders {
+	text-align: center;
+	padding: 40px;
+	background: #f9f9f9;
+	color: #888;
+}
+
+.btn-shop {
+	display: inline-block;
+	margin-top: 15px;
+	color: #1a1a1a;
+	text-decoration: underline;
+}
+
+.order-card {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 4px;
+	transition: box-shadow 0.3s;
+}
+
+.order-card:hover {
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.order-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 15px;
+	border-bottom: 1px dashed #ccc; /* Receipt look */
+	margin-bottom: 15px;
+}
+
+.order-id {
+	font-family: "Courier Prime", monospace;
+	font-weight: 700;
+	font-size: 1.1rem;
+	margin-right: 15px;
+}
+
+.order-status {
+	font-size: 0.75rem;
+	padding: 4px 8px;
+	border-radius: 4px;
+	letter-spacing: 1px;
+}
+
+.status-paid,
+.status-completed {
+	background: #d4edda;
+	color: #155724;
+}
+.status-pending {
+	background: #fff3cd;
+	color: #856404;
+}
+.status-shipped {
+	background: #cce5ff;
+	color: #004085;
+}
+.status-cancelled {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+.order-total {
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+
+.order-items-preview {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+}
+
+.mini-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.mini-item img {
+	width: 50px;
+	height: 50px;
+	object-fit: cover;
+	border-radius: 3px;
+	border: 1px solid #eee;
+}
+
+.mini-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.mini-name {
+	font-size: 0.9rem;
+	color: #333;
+}
+
+.mini-qty {
+	font-size: 0.8rem;
+	color: #888;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+	.account-grid {
+		grid-template-columns: 1fr;
+	}
+}
