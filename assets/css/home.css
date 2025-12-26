@@ -163,6 +163,14 @@
     text-align:justify;
 }
 
+.promo-content .promo-button {
+    padding: 12px 28px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
     .promo-section {
