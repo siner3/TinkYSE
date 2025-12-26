@@ -1,200 +1,239 @@
 /* ===== Hero ===== */
 .hero {
-    height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background-size: cover;
-    background-position: center;
+	height: 90vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background-size: cover;
+	background-position: center;
 }
 
 .hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+}
+/* Quick fix for Products Grid in Home */
+.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 30px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
 }
 
+.product {
+	text-align: center;
+	transition: transform 0.3s;
+}
+
+.product:hover {
+	transform: translateY(-5px);
+}
+
+.product img {
+	width: 100%;
+	height: 250px;
+	object-fit: cover;
+	margin-bottom: 15px;
+}
+
+.product-link {
+	text-decoration: none;
+	color: inherit;
+}
 .hero-text {
-    position: relative;
-    text-align: center;
-    color: #fff;
-    letter-spacing: 5px;
-    z-index: 2;
+	position: relative;
+	text-align: center;
+	color: #fff;
+	letter-spacing: 5px;
+	z-index: 2;
 }
 
 .hero-text h1 {
-    font-size: 44px;
-    letter-spacing: 10px;
-    line-height: 1.3;
+	font-size: 44px;
+	letter-spacing: 10px;
+	line-height: 1.3;
 }
 
 /* ===== Section Base ===== */
 .section {
-    padding: 50px 60px;
+	padding: 50px 60px;
 }
 
 .section h2 {
-    font-weight: bold;
-    text-align: center;
-    font-size: 53px;
-    margin-bottom: 40px;
+	font-weight: bold;
+	text-align: center;
+	font-size: 53px;
+	margin-bottom: 40px;
 }
 
 /* ===== Products ===== */
 .products {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 28px;
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 28px;
 }
 
+.btn-shop-now {
+	display: inline-block;
+	padding: 12px 28px;
+	background: rgba(0, 31, 63, 1);
+	color: #fff;
+	border-radius: 30px;
+	font-size: 16px;
+	margin-top: 20px;
+	transition: background 0.3s;
+	text-decoration: none;
+}
 .product {
-    width: 100%;
-    background: #fff;
-    border-radius: 14px;
-    padding: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    transition: 0.3s;
-    
+	width: 100%;
+	background: #fff;
+	border-radius: 14px;
+	padding: 15px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+	transition: 0.3s;
 }
 
 .product:hover {
-    transform: translateY(-6px);
-    background: rgba(228, 242, 249, 1);
+	transform: translateY(-6px);
+	background: rgba(228, 242, 249, 1);
 }
 
 .product img {
-    width: 100%;
-    height: 280px;
-    object-fit: cover;
-    border-radius: 12px;
+	width: 100%;
+	height: 280px;
+	object-fit: cover;
+	border-radius: 12px;
 }
 
 .product h4 {
-    margin: 12px 0 5px;
-    font-size: 20px;
+	margin: 12px 0 5px;
+	font-size: 20px;
 }
 
 .price {
-    font-size: 15px;
-    color: #555;
+	font-size: 15px;
+	color: #555;
 }
 
 .material {
-    font-size: 15px;
-    color: #888;
+	font-size: 15px;
+	color: #888;
 }
 
 /* ===== Features ===== */
 .features {
-    padding: 150px 100px;
-    background-size: cover;
-    background-position: center;
+	padding: 150px 100px;
+	background-size: cover;
+	background-position: center;
 }
 
 .feature-box {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 40px;
-    text-align: center;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 40px;
+	text-align: center;
 }
 
 .feature i {
-    font-size: 80px;
-    color: rgba(0, 31, 63, 1);
-    margin-bottom: 15px;
+	font-size: 80px;
+	color: rgba(0, 31, 63, 1);
+	margin-bottom: 15px;
 }
 
 .feature h4 {
-    font-size: 20px;
-    font-weight: bold;
-    color: rgba(0, 31, 63, 1);
-    letter-spacing:2.8px;
+	font-size: 20px;
+	font-weight: bold;
+	color: rgba(0, 31, 63, 1);
+	letter-spacing: 2.8px;
 }
 
-.feature p{
-    font-size: 12px;
-    color: rgba(0, 31, 63, 1);
-    letter-spacing:1.68px;
+.feature p {
+	font-size: 12px;
+	color: rgba(0, 31, 63, 1);
+	letter-spacing: 1.68px;
 }
 
 /* ===== Promo Sections ===== */
 .promo-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 748px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	min-height: 748px;
 }
 
 .promo-image {
-    background-size: cover;
-    background-position: center;
+	background-size: cover;
+	background-position: center;
 }
 
 .promo-content {
-    padding: 90px 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 13px;
+	padding: 90px 80px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 13px;
 }
 
 .promo-content h3 {
-    max-width: 520px;
-    font-size: 32px;
-    margin-bottom: 10px;
-    letter-spacing: 4.48px;
+	max-width: 520px;
+	font-size: 32px;
+	margin-bottom: 10px;
+	letter-spacing: 4.48px;
 }
 
 .promo-content em {
-    font-size: 17px;
-    max-width: 420px;
-    margin-bottom: 15px;
-    color: #555;
+	font-size: 17px;
+	max-width: 420px;
+	margin-bottom: 15px;
+	color: #555;
 }
 
 .promo-content p {
-    font-size: 18px;
-    line-height: 1.8;
-    max-width: 500px;
-    margin-bottom: 25px;
-    color: #444;
-    text-align:justify;
+	font-size: 18px;
+	line-height: 1.8;
+	max-width: 500px;
+	margin-bottom: 25px;
+	color: #444;
+	text-align: justify;
 }
 
 .promo-content .promo-button {
-    padding: 12px 28px !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+	padding: 12px 28px !important;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
-    .promo-section {
-        grid-template-columns: 1fr;
-    }
+	.promo-section {
+		grid-template-columns: 1fr;
+	}
 
-    .promo-content {
-        padding: 50px 30px;
-    }
+	.promo-content {
+		padding: 50px 30px;
+	}
 }
 
 @media (max-width: 768px) {
-    header {
-        padding: 20px;
-    }
+	header {
+		padding: 20px;
+	}
 
-    .hero-text h1 {
-        font-size: 28px;
-        letter-spacing: 3px;
-    }
+	.hero-text h1 {
+		font-size: 28px;
+		letter-spacing: 3px;
+	}
 
-.section {
-    padding: 70px 80px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
+	.section {
+		padding: 70px 80px;
+		max-width: 1400px;
+		margin: 0 auto;
+	}
 }

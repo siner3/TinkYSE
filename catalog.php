@@ -164,30 +164,30 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
             <form id="filterForm" method="GET" action="catalog.php">
 
                 <?php if (!empty($_GET['search'])): ?>
-                    <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
+                <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
                 <?php else: ?>
-                    <input type="hidden" name="cat" value="<?= htmlspecialchars($category) ?>">
+                <input type="hidden" name="cat" value="<?= htmlspecialchars($category) ?>">
                 <?php endif; ?>
 
                 <?php foreach ($sidebar_filters as $title => $opts):
                     $key = strtolower($title);
                     $isOpen = (isset($_GET[$key]) && !empty($_GET[$key])) ? 'active' : '';
                 ?>
-                    <div class="filter-group <?= $isOpen ?>">
-                        <div class="filter-title" onclick="toggleFilter(this)">
-                            <?= $title ?> <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <div class="filter-options">
-                            <?php foreach ($opts as $opt):
+                <div class="filter-group <?= $isOpen ?>">
+                    <div class="filter-title" onclick="toggleFilter(this)">
+                        <?= $title ?> <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="filter-options">
+                        <?php foreach ($opts as $opt):
                                 $isChecked = (isset($_GET[$key]) && in_array($opt, $_GET[$key])) ? 'checked' : '';
                             ?>
-                                <label>
-                                    <input type="checkbox" name="<?= $key ?>[]" value="<?= $opt ?>" <?= $isChecked ?>>
-                                    <?= $opt ?>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
+                        <label>
+                            <input type="checkbox" name="<?= $key ?>[]" value="<?= $opt ?>" <?= $isChecked ?>>
+                            <?= $opt ?>
+                        </label>
+                        <?php endforeach; ?>
                     </div>
+                </div>
                 <?php endforeach; ?>
 
                 <button type="submit" class="btn-apply">Apply Filters</button>
@@ -197,72 +197,72 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
         <div style="width: 100%;">
 
             <?php if (!empty($active_filters) || !empty($_GET['search'])): ?>
-                <div class="active-filters">
-                    <?php if (!empty($_GET['search'])): ?>
-                        <a href="<?= getRemoveUrl('search', $_GET['search']) ?>" class="filter-chip">
-                            Search: <?= htmlspecialchars($_GET['search']) ?> <i class="fa-solid fa-xmark"></i>
-                        </a>
-                    <?php endif; ?>
+            <div class="active-filters">
+                <?php if (!empty($_GET['search'])): ?>
+                <a href="<?= getRemoveUrl('search', $_GET['search']) ?>" class="filter-chip">
+                    Search: <?= htmlspecialchars($_GET['search']) ?> <i class="fa-solid fa-xmark"></i>
+                </a>
+                <?php endif; ?>
 
-                    <?php foreach ($active_filters as $filter): ?>
-                        <a href="<?= getRemoveUrl($filter['key'], $filter['value']) ?>" class="filter-chip">
-                            <?= htmlspecialchars($filter['value']) ?> <i class="fa-solid fa-xmark"></i>
-                        </a>
-                    <?php endforeach; ?>
+                <?php foreach ($active_filters as $filter): ?>
+                <a href="<?= getRemoveUrl($filter['key'], $filter['value']) ?>" class="filter-chip">
+                    <?= htmlspecialchars($filter['value']) ?> <i class="fa-solid fa-xmark"></i>
+                </a>
+                <?php endforeach; ?>
 
-                    <a href="catalog.php?cat=<?= htmlspecialchars($category) ?>" class="clear-all">Clear All</a>
-                </div>
+                <a href="catalog.php?cat=<?= htmlspecialchars($category) ?>" class="clear-all">Clear All</a>
+            </div>
             <?php endif; ?>
 
             <main class="product-grid">
                 <?php if (empty($grouped_products)): ?>
-                    <div style="grid-column:1/-1; text-align:center; padding:60px; color:#888;">
-                        <i class="fa-regular fa-folder-open" style="font-size:2.5rem; margin-bottom:15px;"></i>
-                        <p>No products found matching your selection.</p>
-                    </div>
+                <div style="grid-column:1/-1; text-align:center; padding:60px; color:#888;">
+                    <i class="fa-regular fa-folder-open" style="font-size:2.5rem; margin-bottom:15px;"></i>
+                    <p>No products found matching your selection.</p>
+                </div>
                 <?php else: ?>
-                    <?php foreach ($grouped_products as $group):
+                <?php foreach ($grouped_products as $group):
                         $base = $group['base'];
                         $variants = $group['variants'];
                     ?>
-                        <div class="product-card">
-                            <div class="image-wrapper">
-                                <a href="product_detail.php?id=<?= $base['ITEM_ID'] ?>">
-                                    <img src="<?= htmlspecialchars($base['ITEM_IMAGE']) ?>" id="img-<?= $base['ITEM_ID'] ?>"
-                                        alt="<?= htmlspecialchars($base['ITEM_NAME']) ?>">
-                                </a>
+                <div class="product-card">
+                    <div class="image-wrapper">
+                        <a href="product_detail.php?id=<?= $base['ITEM_ID'] ?>">
+                            <img src="<?= htmlspecialchars($base['ITEM_IMAGE']) ?>" id="img-<?= $base['ITEM_ID'] ?>"
+                                alt="<?= htmlspecialchars($base['ITEM_NAME']) ?>">
+                        </a>
 
-                                <?php if (count($variants) > 1): ?>
-                                    <div class="swatches">
-                                        <?php foreach ($variants as $v):
+                        <?php if (count($variants) > 1): ?>
+                        <div class="swatches">
+                            <?php foreach ($variants as $v):
                                             $mat = strtolower($v['ITEM_MATERIAL']);
                                             $cls = 'silver';
                                             if (strpos($mat, 'gold') !== false) $cls = 'gold';
                                             if (strpos($mat, 'rose') !== false) $cls = 'rose';
                                         ?>
-                                            <span class="swatch <?= $cls ?>" onmouseover="updateCard(this, '<?= $base['ITEM_ID'] ?>')"
-                                                data-image="<?= htmlspecialchars($v['ITEM_IMAGE']) ?>"
-                                                data-price="RM <?= number_format($v['ITEM_PRICE'], 2) ?>"
-                                                data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>">
-                                            </span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
-                                <?= htmlspecialchars($base['ITEM_NAME']) ?>
-                            </div>
-
-                            <div class="designer">
-                                DESIGNED BY: <?= htmlspecialchars($base['DESIGNER_NAME'] ?? 'TINK Studio') ?>
-                            </div>
-
-                            <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
-                                RM <?= number_format($base['ITEM_PRICE'], 2) ?>
-                            </div>
+                            <span class="swatch <?= $cls ?>" onmouseover="updateCard(this, '<?= $base['ITEM_ID'] ?>')"
+                                data-image="<?= htmlspecialchars($v['ITEM_IMAGE']) ?>"
+                                data-price="RM <?= number_format($v['ITEM_PRICE'], 2) ?>"
+                                data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>">
+                            </span>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
+                        <?= htmlspecialchars($base['ITEM_NAME']) ?>
+                    </div>
+
+                    <div class="designer">
+                        DESIGNED BY: <?= htmlspecialchars($base['DESIGNER_NAME'] ?? 'TINK Studio') ?>
+                    </div>
+
+                    <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
+                        RM <?= number_format($base['ITEM_PRICE'], 2) ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
                 <?php endif; ?>
             </main>
         </div>
@@ -271,50 +271,50 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
     <?php include 'components/footer.php'; ?>
 
     <script>
-        // 1. Sidebar Toggle
-        function toggleFilter(element) {
-            element.parentElement.classList.toggle('active');
-        }
+    // 1. Sidebar Toggle
+    function toggleFilter(element) {
+        element.parentElement.classList.toggle('active');
+    }
 
-        // 2. Swatch Update
-        function updateCard(el, id) {
-            const img = document.getElementById('img-' + id);
-            const price = document.getElementById('price-' + id);
-            const title = document.getElementById('title-' + id);
+    // 2. Swatch Update
+    function updateCard(el, id) {
+        const img = document.getElementById('img-' + id);
+        const price = document.getElementById('price-' + id);
+        const title = document.getElementById('title-' + id);
 
-            if (img && el.dataset.image) img.src = el.dataset.image;
-            if (price && el.dataset.price) price.innerText = el.dataset.price;
-            if (title && el.dataset.name) title.innerText = el.dataset.name;
-        }
+        if (img && el.dataset.image) img.src = el.dataset.image;
+        if (price && el.dataset.price) price.innerText = el.dataset.price;
+        if (title && el.dataset.name) title.innerText = el.dataset.name;
+    }
 
-        // 3. Custom Sorting Dropdown Logic
-        const dropdown = document.getElementById('sortDropdown');
-        const dropdownSelected = dropdown.querySelector('.dropdown-selected');
-        const dropdownOptions = dropdown.querySelectorAll('.dropdown-option');
+    // 3. Custom Sorting Dropdown Logic
+    const dropdown = document.getElementById('sortDropdown');
+    const dropdownSelected = dropdown.querySelector('.dropdown-selected');
+    const dropdownOptions = dropdown.querySelectorAll('.dropdown-option');
 
-        // Toggle visibility
-        dropdownSelected.addEventListener('click', () => dropdown.classList.toggle('open'));
+    // Toggle visibility
+    dropdownSelected.addEventListener('click', () => dropdown.classList.toggle('open'));
 
-        // Handle Selection & Reload Page
-        dropdownOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                const value = this.getAttribute('data-value');
+    // Handle Selection & Reload Page
+    dropdownOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
 
-                // Get current URL params
-                const urlParams = new URLSearchParams(window.location.search);
+            // Get current URL params
+            const urlParams = new URLSearchParams(window.location.search);
 
-                // Update 'sort' param
-                urlParams.set('sort', value);
+            // Update 'sort' param
+            urlParams.set('sort', value);
 
-                // Reload page with new params
-                window.location.search = urlParams.toString();
-            });
+            // Reload page with new params
+            window.location.search = urlParams.toString();
         });
+    });
 
-        // Close dropdown if clicked outside
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
-        });
+    // Close dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
     </script>
 
 </body>
