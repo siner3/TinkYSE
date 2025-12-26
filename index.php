@@ -1,6 +1,11 @@
 <?php
-// index.php
+require_once "db_home.php";
+
+$stmt = $pdo->query("SELECT name, price, material, image FROM products LIMIT 5");
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -44,45 +49,18 @@
     <section class="section">
         <h2>Trending Jewellery</h2>
 
-        <div class="products">
-
-            <div class="product">
-                <img src="assets/images/ring1.png" alt="Little Flower Ring">
-                <h4>"Little Flower" Adjustable Ring</h4>
-                <div class="price">MYR 33</div>
-                <div class="material">Silver-plated copper</div>
-            </div>
-
-            <div class="product">
-                <img src="assets/images/bracelet1.png" alt="Ocean Wave Bracelet">
-                <h4>Ocean Wave Elegance Bracelet</h4>
-                <div class="price">MYR 48</div>
-                <div class="material">Silver sterling & resin</div>
-            </div>
-
-            <div class="product">
-                <img src="assets/images/earring1.png" alt="Ocean Whisper Earrings">
-                <h4>Ocean Whisper Earrings</h4>
-                <div class="price">MYR 29</div>
-                <div class="material">Hypoallergenic alloy</div>
-            </div>
-
-            <div class="product">
-                <img src="assets/images/ring2.png" alt="Eternal Bloom Ring">
-                <h4>Eternal Bloom Ring</h4>
-                <div class="price">MYR 39</div>
-                <div class="material">Silver Sterling</div>
-            </div>
-
-            <div class="product">
-                <img src="assets/images/necklace1.png" alt="Eternal Bloom Ring">
-                <h4>Ocean Pulse Necklace</h4>
-                <div class="price">MYR 33</div>
-                <div class="material">18K Gold plating</div>
-            </div>
-
+<div class="products">
+    <?php foreach ($products as $row) { ?>
+        <div class="product">
+            <img src="assets/images/<?php echo htmlspecialchars($row['image']); ?>">
+            <h4><?php echo htmlspecialchars($row['name']); ?></h4>
+            <div class="price">MYR <?php echo htmlspecialchars($row['price']); ?></div>
+            <div class="material"><?php echo htmlspecialchars($row['material']); ?></div>
         </div>
-    </section>
+    <?php } ?>
+</div>
+
+     </section>
 
     <!-- ===== Features ===== -->
     <section class="features" style="background-image: url('assets/images/wave.jpg');">
@@ -126,7 +104,7 @@
                 Whether it’s for someone you love or for yourself, every order comes
                 beautifully wrapped with premium gift packaging.
             </p>
-            <button>Get Premium Packaging</button>
+            <button class="promo-button">Get Premium Packaging</button>
         </div>
     </section>
 
@@ -142,7 +120,7 @@
                 With our engraving service, every piece becomes uniquely
                 yours — crafted with care to celebrate your story.
             </p>
-            <button>Design Your Moment</button>
+            <button class="promo-button">Design Your Moment</button>
         </div>
 
         <div class="promo-image" style="background-image: url('assets/images/engraving.png');"></div>
