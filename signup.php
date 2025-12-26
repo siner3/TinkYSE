@@ -107,14 +107,12 @@ session_start();
                         <input type="password" name="confirm_password" required>
                     </fieldset>
 
-<<<<<<< HEAD
-=======
                     <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px; text-align: center;">
-                    By registering, you agree to our 
-                    <a href="terms.php" target="_blank" style="color: #d4af37; text-decoration: underline;">Terms & Conditions</a>.
+                        By registering, you agree to our
+                        <a href="terms.php" target="_blank" style="color: #d4af37; text-decoration: underline;">Terms &
+                            Conditions</a>.
                     </p>
-                    
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
+
                     <button type="submit" class="login-btn">Register</button>
                 </form>
 

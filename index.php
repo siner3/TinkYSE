@@ -43,16 +43,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <section class="section">
         <div class="section-header">
             <h2>Trending Jewellery</h2>
-<<<<<<< HEAD
             <p class="section-subtitle">Our most loved pieces this season</p>
-=======
-            <p>Our most loved pieces this season</p>
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
         </div>
 
         <div class="products">
             <?php foreach ($products as $row) { ?>
-<<<<<<< HEAD
                 <div class="product">
                     <a href="product_details.php?id=<?= $row['ITEM_ID']; ?>" class="product-link">
                         <div class="img-container">
@@ -64,19 +59,6 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="price">MYR <?= number_format($row['ITEM_PRICE'], 2); ?></div>
                     </a>
                 </div>
-=======
-            <div class="product">
-                <a href="product_details.php?id=<?= $row['ITEM_ID']; ?>" class="product-link">
-                    <div class="img-container">
-                        <img src="assets/images/<?= htmlspecialchars($row['ITEM_IMAGE']); ?>"
-                            alt="<?= htmlspecialchars($row['ITEM_NAME']); ?>">
-                    </div>
-                    <h4><?= htmlspecialchars($row['ITEM_NAME']); ?></h4>
-                    <div class="material"><?= htmlspecialchars($row['ITEM_MATERIAL']); ?></div>
-                    <div class="price">MYR <?= number_format($row['ITEM_PRICE'], 2); ?></div>
-                </a>
-            </div>
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
             <?php } ?>
         </div>
 

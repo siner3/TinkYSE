@@ -459,8 +459,5 @@ $stats = $pdo->query("SELECT
     </script>
 </body>
 
-<<<<<<< HEAD
+
 </html>
-=======
-</html>
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597

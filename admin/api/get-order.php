@@ -23,21 +23,13 @@ if (!isset($_GET['id'])) {
 $order_id = intval($_GET['id']);
 
 try {
-<<<<<<< HEAD
     // 1. Fetch Order Details
-=======
-    // 1. Fetch Order Details (DIRECT LINK TO CUSTOMER - thanks to the fix!)
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
     $stmt = $pdo->prepare("
         SELECT 
             o.ORDER_ID, 
             o.ORDER_DATE, 
             o.ORDER_STATUS, 
-<<<<<<< HEAD
             o.ORDER_TOTAL, 
-=======
-            o.ORDER_TOTALAMOUNT, 
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
             o.CART_ID, 
             c.CUSTOMER_NAME, 
             c.CUSTOMER_EMAIL
@@ -54,11 +46,10 @@ try {
         exit;
     }
 
-<<<<<<< HEAD
     // 2. Fetch Items in Cart
-=======
+
     // 2. Fetch Items in Cart (Still from CARTITEM, linked via CART_ID)
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
+
     $items = [];
     if (!empty($order['CART_ID'])) {
         $stmtItems = $pdo->prepare("
@@ -74,7 +65,7 @@ try {
         ");
         $stmtItems->execute([$order['CART_ID']]);
         $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
-<<<<<<< HEAD
+
 
         // --- THE FIX IS HERE ---
         // We modify the image path before sending it to the frontend
@@ -88,8 +79,8 @@ try {
             }
         }
         // -----------------------
-=======
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597
+
+
     }
 
     // Return JSON response

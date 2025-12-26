@@ -35,9 +35,9 @@
     <div class="footer-bottom">
         &copy; <?php echo date("Y"); ?> Tink. All Rights Reserved
     </div>
-</footer>
+    </footer>
 
-<style>
+    <style>
     /* Import Fonts if not already in header */
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Lato:wght@300;400&display=swap');
 
@@ -156,8 +156,3 @@
             justify-content: center;
         }
     }
-<<<<<<< HEAD
-</style>
-=======
-</style>
->>>>>>> f3beae1f17acec66bd7be67a37c46baa6141b597

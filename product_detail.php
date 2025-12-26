@@ -65,7 +65,7 @@ if (!empty($current_main_img)) {
 
 // Fallback if completely empty
 if (empty($gallery_images)) {
-    $gallery_images[] = 'assets/images/placeholder.png'; // Ensure this path is valid
+    $gallery_images[] = 'assets/images/placeholder.png';
 }
 
 // 4. FETCH VARIANTS (Siblings in the same group)
@@ -114,453 +114,485 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($product['ITEM_NAME']) ?> | Tuk</title>
+    <title><?= htmlspecialchars($product['ITEM_NAME']) ?> | TINK</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/product_detail.css">
     <style>
-    /* --- GLOBAL --- */
-
-    /* --- HEADER (Compact) --- */
-    .site-header {
-        background-color: #203742;
-        color: #fff;
-        padding: 15px 0;
-    }
-
-    .header-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .main-nav {
-        display: flex;
-        gap: 25px;
-    }
-
-    .nav-link {
-        color: #ccc;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-    }
-
-    .nav-link:hover,
-    .nav-link.active {
-        color: #fff;
-    }
-
-    .header-right {
-        display: flex;
-        gap: 20px;
-        color: white;
-    }
-
-    /* --- PAGE TITLE --- */
-    .page-title {
-        text-align: center;
-        padding: 50px 0 30px;
-        margin-top: 60px;
-    }
-
-    .page-title h1 {
-        font-family: var(--font-serif);
-        font-size: 3rem;
-        color: var(--text-slate);
-        font-weight: 400;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Poppins', sans-serif;
-        background: #f8f4ec;
-        color: #1c1c1c;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4 {
-        font-family: 'Playfair Display', serif;
-        font-weight: 400;
-    }
-
-    a {
-        text-decoration: none;
-        color: inherit;
-        transition: 0.3s;
-    }
-
-
-
-    /* BREADCRUMBS */
-    .breadcrumbs {
-        padding: 0 60px;
-        font-size: 12px;
-        color: #888;
-        padding-bottom: 20px;
-        margin-top: 120px;
-    }
-
-    .breadcrumbs a:hover {
-        color: #000;
-    }
-
-    /* PRODUCT LAYOUT */
-    .product-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 60px;
-        padding: 20px 60px 80px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    /* GALLERY */
-    .gallery-wrapper {
-        display: grid;
-        grid-template-columns: 80px 1fr;
-        gap: 15px;
-        height: 600px;
-    }
-
-    .thumbnails {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        overflow-y: auto;
-    }
-
-    .thumbnails img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: 0.2s;
-    }
-
-    .thumbnails img:hover,
-    .thumbnails img.active {
-        border-color: #333;
-    }
-
-    .main-image {
-        width: 100%;
-        height: 100%;
-        background: #fff;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .main-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* INFO */
-    .product-info {
-        padding-top: 10px;
-    }
-
-    .product-title {
-        font-size: 32px;
-        margin-bottom: 5px;
-        line-height: 1.2;
-    }
-
-    .designer-name {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 15px;
-    }
-
-    .product-price {
-        font-size: 24px;
-        font-weight: 500;
-        margin-bottom: 25px;
-    }
-
-    /* VARIANTS */
-    .variants-section {
-        margin-bottom: 20px;
-    }
-
-    .swatches {
-        display: flex;
-        gap: 10px;
-        margin-top: 8px;
-    }
-
-    .swatch {
-        width: 30px;
-        height: 30px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        position: relative;
-        background-size: cover;
-    }
-
-    .swatch.active {
-        border: 1px solid #000;
-        outline: 1px solid #000;
-    }
-
-    /* Helper Color Classes */
-    .bg-silver {
-        background-color: #C0C0C0;
-    }
-
-    .bg-gold {
-        background-color: #D4AF37;
-    }
-
-    .bg-rose {
-        background-color: #E6C2BF;
-    }
-
-    .bg-white {
-        background-color: #FFF;
-    }
-
-    /* ENGRAVING */
-    .engraving-section {
-        background: #fff;
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 25px;
-        border-radius: 4px;
-    }
-
-    .engraving-check {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 13px;
-        cursor: pointer;
-        margin-bottom: 10px;
-    }
-
-    .engraving-input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        font-family: 'Poppins', sans-serif;
-        display: none;
-    }
-
-    /* ACTIONS */
-    .action-row {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 30px;
-        height: 45px;
-    }
-
-    .qty-selector {
-        display: flex;
-        align-items: center;
-        border: 1px solid #ccc;
-        padding: 0 10px;
-    }
-
-    .qty-btn {
-        background: none;
-        border: none;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 0 10px;
-        color: black;
-    }
-
-    .qty-input {
-        width: 40px;
-        text-align: center;
-        border: none;
-        background: transparent;
-        font-family: 'Poppins';
-    }
-
-    .btn-add-bag {
-        flex: 1;
-        background: #000;
-        color: #fff;
-        border: none;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 1px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .btn-add-bag:hover {
-        background: #333;
-    }
-
-    /* TEXT CONTENT */
-    .description {
-        font-size: 13px;
-        line-height: 1.6;
-        color: #444;
-        margin-bottom: 20px;
-    }
-
-    .details-list {
-        font-size: 12px;
-        color: #555;
-        list-style-position: inside;
-    }
-
-    .details-list li {
-        margin-bottom: 4px;
-    }
-
-    /* DESIGNER SECTION */
-    .designer-section {
-        padding: 60px;
-    }
-
-    .section-header {
-        margin-bottom: 30px;
-        font-size: 20px;
-    }
-
-    .designer-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-    }
-
-    .mini-card img {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        margin-bottom: 10px;
-    }
-
-    .mini-card h5 {
-        font-size: 13px;
-        margin-bottom: 5px;
-    }
-
-    .mini-card p {
-        font-size: 12px;
-        color: #666;
-    }
-
-    /* REVIEWS */
-    .reviews-section {
-        padding: 40px 60px;
-        max-width: 900px;
-    }
-
-    .review-card {
-        border-bottom: 1px solid #ddd;
-        padding: 20px 0;
-    }
-
-    .review-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-
-    .stars {
-        color: #f4c150;
-        font-size: 12px;
-    }
-
-    .review-user {
-        font-weight: 500;
-        font-size: 13px;
-    }
-
-    .review-date {
-        font-size: 11px;
-        color: #888;
-    }
-
-    .review-text {
-        font-size: 13px;
-        line-height: 1.5;
-        color: #444;
-    }
-
-    /* FOOTER */
-    footer {
-        background: #f8f4ec;
-        padding: 60px 80px 20px;
-        font-size: 13px;
-        border-top: 1px solid #ddd;
-    }
-
-    .footer-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 40px;
-    }
-
-    .footer-grid h4 {
-        margin-bottom: 12px;
-        font-family: 'Playfair Display';
-    }
-
-    .footer-bottom {
-        text-align: center;
-        margin-top: 40px;
-        font-size: 12px;
-        color: #777;
-    }
-
-    @media(max-width: 900px) {
-        .product-container {
-            grid-template-columns: 1fr;
-            padding: 20px;
+        /* --- GLOBAL --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8f4ec;
+            color: #1c1c1c;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: 0.3s;
+        }
+
+        /* --- HEADER (Compact) --- */
+        .site-header {
+            background-color: #203742;
+            color: #fff;
+            padding: 15px 0;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: #ccc;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #fff;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            color: white;
+        }
+
+        /* --- PAGE TITLE --- */
+        .page-title {
+            text-align: center;
+            padding: 50px 0 30px;
+            margin-top: 60px;
+        }
+
+        .page-title h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: #0b2239;
+            font-weight: 400;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* BREADCRUMBS */
+        .breadcrumbs {
+            padding: 0 60px;
+            font-size: 12px;
+            color: #888;
+            padding-bottom: 20px;
+            margin-top: 120px;
+        }
+
+        .breadcrumbs a:hover {
+            color: #000;
+        }
+
+        /* PRODUCT LAYOUT */
+        .product-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            padding: 20px 60px 80px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* GALLERY */
         .gallery-wrapper {
-            height: auto;
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 15px;
+            height: 600px;
         }
 
         .thumbnails {
-            flex-direction: row;
-            order: 2;
-            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
         }
 
         .thumbnails img {
-            width: 60px;
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            cursor: pointer !important;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            pointer-events: auto !important;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            z-index: 10;
+        }
+
+        .thumbnails img:hover {
+            border-color: #7fb3c8;
+        }
+
+        .thumbnails img.active {
+            border-color: #0b2239;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* INFO */
+        .product-info {
+            padding-top: 10px;
+        }
+
+        .product-title {
+            font-size: 32px;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .designer-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 25px;
+            color: #0b2239;
+        }
+
+        /* VARIANTS */
+        .variants-section {
+            margin-bottom: 20px;
+        }
+
+        .swatches {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            position: relative;
+            background-size: cover;
+            transition: 0.2s;
+        }
+
+        .swatch:hover {
+            border-color: #7fb3c8;
+        }
+
+        .swatch.active {
+            border: 2px solid #0b2239;
+            outline: 2px solid #0b2239;
+        }
+
+        /* Helper Color Classes */
+        .bg-silver {
+            background-color: #C0C0C0;
+        }
+
+        .bg-gold {
+            background-color: #D4AF37;
+        }
+
+        .bg-rose {
+            background-color: #E6C2BF;
+        }
+
+        .bg-white {
+            background-color: #FFF;
+        }
+
+        /* ENGRAVING */
+        .engraving-section {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .engraving-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .engraving-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            font-family: 'Poppins', sans-serif;
+            display: none;
+        }
+
+        /* ACTIONS */
+        .action-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            height: 45px;
+        }
+
+        .qty-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            padding: 0 10px;
+            background: #fff;
+        }
+
+        .qty-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer !important;
+            padding: 0 10px;
+            color: #0b2239;
+            font-weight: 500;
+            pointer-events: auto !important;
+            user-select: none;
+            -webkit-user-select: none;
+            min-width: 30px;
+            line-height: 1;
+        }
+
+        .qty-btn:hover {
+            color: #7fb3c8;
+        }
+
+        .qty-input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-family: 'Poppins';
+            font-size: 14px;
+        }
+
+        .btn-add-bag {
+            flex: 1;
+            background: #0b2239;
+            color: #fff;
+            border: none;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-add-bag:hover {
+            background: #7fb3c8;
+        }
+
+        /* TEXT CONTENT */
+        .description {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 20px;
+        }
+
+        .details-list {
+            font-size: 12px;
+            color: #555;
+            list-style-position: inside;
+        }
+
+        .details-list li {
+            margin-bottom: 4px;
+        }
+
+        /* DESIGNER SECTION */
+        .designer-section {
+            padding: 60px;
+        }
+
+        .section-header {
+            margin-bottom: 30px;
+            font-size: 20px;
+            color: #0b2239;
         }
 
         .designer-grid {
-            grid-template-columns: 1fr 1fr;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
         }
-    }
+
+        .mini-card {
+            transition: 0.3s;
+        }
+
+        .mini-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .mini-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .mini-card h5 {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .mini-card p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* REVIEWS */
+        .reviews-section {
+            padding: 40px 60px;
+            max-width: 900px;
+        }
+
+        .review-card {
+            border-bottom: 1px solid #ddd;
+            padding: 20px 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stars {
+            color: #f4c150;
+            font-size: 12px;
+        }
+
+        .review-user {
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .review-date {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .review-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #444;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #f8f4ec;
+            padding: 60px 80px 20px;
+            font-size: 13px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .footer-grid h4 {
+            margin-bottom: 12px;
+            font-family: 'Playfair Display';
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: #777;
+        }
+
+        @media(max-width: 900px) {
+            .product-container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .gallery-wrapper {
+                height: auto;
+                grid-template-columns: 1fr;
+            }
+
+            .thumbnails {
+                flex-direction: row;
+                order: 2;
+                margin-top: 10px;
+            }
+
+            .thumbnails img {
+                width: 60px;
+            }
+
+            .designer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -579,8 +611,8 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="gallery-wrapper">
             <div class="thumbnails">
                 <?php foreach ($gallery_images as $index => $img): ?>
-                <img src="<?= htmlspecialchars($img) ?>" class="<?= $index === 0 ? 'active' : '' ?>"
-                    onclick="changeImage('<?= htmlspecialchars($img) ?>', this)">
+                    <img src="<?= htmlspecialchars($img) ?>" class="thumbnail-img <?= $index === 0 ? 'active' : '' ?>"
+                        data-image="<?= htmlspecialchars($img) ?>" alt="Product thumbnail">
                 <?php endforeach; ?>
             </div>
             <div class="main-image">
@@ -594,10 +626,10 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="product-price">RM <?= number_format($product['ITEM_PRICE'], 0) ?></div>
 
             <?php if (count($variants) > 1): ?>
-            <div class="variants-section">
-                <div style="font-size: 12px; margin-bottom: 5px;">Color / Material</div>
-                <div class="swatches">
-                    <?php foreach ($variants as $var):
+                <div class="variants-section">
+                    <div style="font-size: 12px; margin-bottom: 5px;">Color / Material</div>
+                    <div class="swatches">
+                        <?php foreach ($variants as $var):
                             // Logic to pick color for swatch
                             $mat = strtolower($var['ITEM_MATERIAL'] . $var['ITEM_COLOR']);
                             $bgClass = 'bg-silver'; // Default
@@ -606,34 +638,34 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
 
                             $isActive = ($var['ITEM_ID'] == $item_id) ? 'active' : '';
                         ?>
-                    <a href="product_detail.php?id=<?= $var['ITEM_ID'] ?>"
-                        class="swatch <?= $bgClass ?> <?= $isActive ?>"
-                        title="<?= htmlspecialchars($var['ITEM_MATERIAL']) ?>">
-                    </a>
-                    <?php endforeach; ?>
+                            <a href="product_detail.php?id=<?= $var['ITEM_ID'] ?>"
+                                class="swatch <?= $bgClass ?> <?= $isActive ?>"
+                                title="<?= htmlspecialchars($var['ITEM_MATERIAL']) ?>">
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
 
-            <form action="cart_add.php" method="POST">
+            <form action="cart_add.php" method="POST" id="addToCartForm">
                 <input type="hidden" name="item_id" value="<?= $item_id ?>">
 
                 <?php if ($product['IS_ENGRAVABLE']): ?>
-                <div class="engraving-section">
-                    <label class="engraving-check">
-                        <input type="checkbox" id="engraveCheck" onclick="toggleEngraving()">
-                        Engraving +RM 5.00
-                    </label>
-                    <input type="text" name="engraving_text" id="engraveInput" class="engraving-input"
-                        placeholder="Enter text (Max 10 chars)" maxlength="10">
-                </div>
+                    <div class="engraving-section">
+                        <label class="engraving-check">
+                            <input type="checkbox" id="engraveCheck">
+                            Engraving +RM 5.00
+                        </label>
+                        <input type="text" name="engraving_text" id="engraveInput" class="engraving-input"
+                            placeholder="Enter text (Max 10 chars)" maxlength="10">
+                    </div>
                 <?php endif; ?>
 
                 <div class="action-row">
                     <div class="qty-selector">
-                        <button type="button" class="qty-btn" onclick="updateQty(-1)">-</button>
+                        <button type="button" class="qty-btn" id="qtyMinus">−</button>
                         <input type="number" name="quantity" id="qtyInput" value="1" class="qty-input" readonly>
-                        <button type="button" class="qty-btn" onclick="updateQty(1)">+</button>
+                        <button type="button" class="qty-btn" id="qtyPlus">+</button>
                     </div>
                     <button type="submit" class="btn-add-bag">
                         <i class="fa-solid fa-bag-shopping"></i> Add to bag
@@ -660,75 +692,178 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <?php if (!empty($related_items)): ?>
-    <div class="designer-section">
-        <h3 class="section-header">Designed By <?= htmlspecialchars($product['DESIGNER_NAME']) ?></h3>
-        <div class="designer-grid">
-            <?php foreach ($related_items as $related): ?>
-            <a href="product_detail.php?id=<?= $related['ITEM_ID'] ?>" class="mini-card">
-                <img src="<?= htmlspecialchars($related['ITEM_IMAGE']) ?>" alt="Rel">
-                <h5><?= htmlspecialchars($related['ITEM_NAME']) ?></h5>
-                <p>RM <?= number_format($related['ITEM_PRICE'], 0) ?></p>
-            </a>
-            <?php endforeach; ?>
+        <div class="designer-section">
+            <h3 class="section-header">More from <?= htmlspecialchars($product['DESIGNER_NAME']) ?></h3>
+            <div class="designer-grid">
+                <?php foreach ($related_items as $related): ?>
+                    <a href="product_detail.php?id=<?= $related['ITEM_ID'] ?>" class="mini-card">
+                        <img src="<?= htmlspecialchars($related['ITEM_IMAGE']) ?>"
+                            alt="<?= htmlspecialchars($related['ITEM_NAME']) ?>">
+                        <h5><?= htmlspecialchars($related['ITEM_NAME']) ?></h5>
+                        <p>RM <?= number_format($related['ITEM_PRICE'], 0) ?></p>
+                    </a>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
     <?php endif; ?>
 
     <div class="reviews-section">
         <h3 class="section-header">Reviews (<?= count($reviews) ?>)</h3>
 
         <?php if (empty($reviews)): ?>
-        <p style="font-size: 13px; color: #777;">No reviews yet. Be the first to review!</p>
+            <p style="font-size: 13px; color: #777;">No reviews yet. Be the first to review!</p>
         <?php else: ?>
-        <?php foreach ($reviews as $rev): ?>
-        <div class="review-card">
-            <div class="review-header">
-                <div class="review-user">
-                    <?= htmlspecialchars($rev['CUSTOMER_NAME']) ?>
-                    <div class="stars">
-                        <?php for ($i = 0; $i < $rev['REVIEW_RATING']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+            <?php foreach ($reviews as $rev): ?>
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="review-user">
+                            <?= htmlspecialchars($rev['CUSTOMER_NAME']) ?>
+                            <div class="stars">
+                                <?php for ($i = 0; $i < $rev['REVIEW_RATING']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+                            </div>
+                        </div>
+                        <div class="review-date"><?= date('M d, Y', strtotime($rev['REVIEW_DATE'])) ?></div>
+                    </div>
+                    <div class="review-text">
+                        <?= htmlspecialchars($rev['REVIEW_TEXT']) ?>
                     </div>
                 </div>
-                <div class="review-date"><?= date('M d, Y', strtotime($rev['REVIEW_DATE'])) ?></div>
-            </div>
-            <div class="review-text">
-                <?= htmlspecialchars($rev['REVIEW_TEXT']) ?>
-            </div>
-        </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
         <?php endif; ?>
     </div>
 
-    <?php include 'components/footer.php'; ?>
-
-
+    <!-- JAVASCRIPT MUST COME BEFORE FOOTER -->
     <script>
-    function changeImage(src, el) {
-        document.getElementById('mainImg').src = src;
-        document.querySelectorAll('.thumbnails img').forEach(img => img.classList.remove('active'));
-        el.classList.add('active');
-    }
+        console.log('🚀 TINK Product Detail Script Loading...');
 
-    function updateQty(change) {
-        const input = document.getElementById('qtyInput');
-        let val = parseInt(input.value);
-        val += change;
-        if (val < 1) val = 1;
-        input.value = val;
-    }
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOM Content Loaded');
 
-    function toggleEngraving() {
-        const input = document.getElementById('engraveInput');
-        const checkbox = document.getElementById('engraveCheck');
-        if (checkbox.checked) {
-            input.style.display = 'block';
-            input.focus();
-        } else {
-            input.style.display = 'none';
-            input.value = '';
-        }
-    }
+            // ===== IMAGE GALLERY FUNCTIONALITY =====
+            const thumbnails = document.querySelectorAll('.thumbnail-img');
+            const mainImg = document.getElementById('mainImg');
+
+            console.log('📸 Found ' + thumbnails.length + ' thumbnails');
+            console.log('🖼️ Main image element:', mainImg);
+
+            if (thumbnails.length > 0 && mainImg) {
+                thumbnails.forEach(function(thumb, index) {
+                    console.log('🔗 Attaching click listener to thumbnail ' + (index + 1));
+
+                    // Add click event listener
+                    thumb.addEventListener('click', function(e) {
+                        console.log('🖱️ Thumbnail clicked!', index + 1);
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Get the image source
+                        const newSrc = this.getAttribute('data-image') || this.src;
+                        console.log('📂 New image source:', newSrc);
+
+                        // Update main image
+                        mainImg.src = newSrc;
+
+                        // Update active state
+                        thumbnails.forEach(function(t) {
+                            t.classList.remove('active');
+                        });
+                        this.classList.add('active');
+
+                        console.log('✅ Image changed successfully');
+                    });
+
+                    // Also add visual feedback
+                    thumb.style.cursor = 'pointer';
+                });
+                console.log('✅ All thumbnail listeners attached');
+            }
+
+            // ===== QUANTITY CONTROLS =====
+            const qtyInput = document.getElementById('qtyInput');
+            const qtyMinus = document.getElementById('qtyMinus');
+            const qtyPlus = document.getElementById('qtyPlus');
+
+            console.log('🔍 Qty elements found:', {
+                input: !!qtyInput,
+                minus: !!qtyMinus,
+                plus: !!qtyPlus
+            });
+
+            if (qtyInput && qtyMinus && qtyPlus) {
+                // Decrease quantity
+                qtyMinus.addEventListener('click', function(e) {
+                    console.log('🖱️ Minus button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let currentValue = parseInt(qtyInput.value) || 1;
+                    console.log('Current qty:', currentValue);
+
+                    if (currentValue > 1) {
+                        qtyInput.value = currentValue - 1;
+                        console.log('✅ Decreased to:', qtyInput.value);
+                    } else {
+                        console.log('⚠️ Cannot go below 1');
+                    }
+                });
+
+                // Increase quantity
+                qtyPlus.addEventListener('click', function(e) {
+                    console.log('🖱️ Plus button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let currentValue = parseInt(qtyInput.value) || 1;
+                    console.log('Current qty:', currentValue);
+
+                    qtyInput.value = currentValue + 1;
+                    console.log('✅ Increased to:', qtyInput.value);
+                });
+
+                // Make buttons visually interactive
+                qtyMinus.style.cursor = 'pointer';
+                qtyPlus.style.cursor = 'pointer';
+
+                console.log('✅ Quantity controls initialized');
+            }
+
+            // ===== ENGRAVING TOGGLE =====
+            const engraveCheck = document.getElementById('engraveCheck');
+            const engraveInput = document.getElementById('engraveInput');
+
+            if (engraveCheck && engraveInput) {
+                console.log('✅ Engraving elements found');
+
+                engraveCheck.addEventListener('change', function() {
+                    console.log('📝 Engraving checkbox changed:', this.checked);
+
+                    if (this.checked) {
+                        engraveInput.style.display = 'block';
+                        engraveInput.focus();
+                    } else {
+                        engraveInput.style.display = 'none';
+                        engraveInput.value = '';
+                    }
+                });
+            }
+
+            console.log('🎉 All JavaScript initialized successfully!');
+        });
+
+        // Fallback: Also try without DOMContentLoaded
+        setTimeout(function() {
+            console.log('⏰ Timeout check - ensuring everything is working');
+
+            // Double-check thumbnails
+            const thumbs = document.querySelectorAll('.thumbnail-img');
+            if (thumbs.length > 0) {
+                console.log('✅ Thumbnails still accessible');
+            }
+        }, 1000);
     </script>
+
+    <?php include 'components/footer.php'; ?>
 
 </body>
 
