@@ -8,7 +8,6 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
-// 2. INIT VARS
 $success_msg = '';
 $error_msg = '';
 
@@ -35,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $item_desc = trim($_POST['item_description'] ?? '');
             $item_cat = $_POST['item_category'] ?? '';
             $designer_id = intval($_POST['designer_id'] ?? 0);
+            // CHECKBOX LOGIC ADDED HERE
             $is_engravable = isset($_POST['is_engravable']) ? 1 : 0;
 
             // Parent ID Logic
@@ -59,13 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $ids = $_POST['var_id'] ?? [];
 
             // 3. GROUPING LOGIC
-            if (empty($existing_parent_id) && !empty($ids[0])) {
-                $check_stmt = $pdo->prepare("SELECT PARENT_ID FROM ITEM WHERE ITEM_ID = ?");
-                $check_stmt->execute([intval($ids[0])]);
-                $db_parent = $check_stmt->fetchColumn();
-                if ($db_parent) $existing_parent_id = $db_parent;
-            }
-
             $final_parent_id = $existing_parent_id;
             if (empty($final_parent_id) && count($names) > 1) {
                 $final_parent_id = rand(10000, 99999);
@@ -74,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $final_parent_id = null;
             }
 
-            // 4. GALLERY IMAGES UPLOAD
+            // 4. BASE GALLERY IMAGES UPLOAD
             $final_gallery = [];
             if (!empty($_POST['existing_gallery_images'])) {
                 $final_gallery = json_decode($_POST['existing_gallery_images'], true) ?? [];
@@ -84,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
             if (!empty($_FILES['base_item_images']['name'][0])) {
-                for ($i = 0; $i < count($_FILES['base_item_images']['name']); $i++) {
+                $count = count($_FILES['base_item_images']['name']);
+                for ($i = 0; $i < $count; $i++) {
                     if (!empty($_FILES['base_item_images']['name'][$i])) {
                         $ext = strtolower(pathinfo($_FILES['base_item_images']['name'][$i], PATHINFO_EXTENSION));
                         $filename = 'base_' . time() . '_' . $i . '.' . $ext;
@@ -95,10 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             $gallery_json = !empty($final_gallery) ? json_encode(array_values($final_gallery)) : null;
-
-            // --- NEW: FALLBACK IMAGE LOGIC ---
-            // If we have gallery images, pick the first one as the default "Product Image"
-            $gallery_fallback_image = !empty($final_gallery) ? $final_gallery[0] : null;
+            $gallery_fallback = !empty($final_gallery) ? $final_gallery[0] : null;
 
             // 5. SAVE / UPDATE VARIANTS
             $saved_ids = [];
@@ -111,22 +102,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $v_id = !empty($ids[$i]) ? intval($ids[$i]) : null;
 
                 $image_path = null;
-                $has_uploaded_new_image = false;
+                $has_new_image = false;
 
-                // Check specific upload
                 if (!empty($_FILES['var_image']['name'][$i])) {
                     $ext = strtolower(pathinfo($_FILES['var_image']['name'][$i], PATHINFO_EXTENSION));
                     $filename = 'var_' . time() . '_' . $i . '.' . $ext;
                     if (move_uploaded_file($_FILES['var_image']['tmp_name'][$i], $upload_dir . $filename)) {
                         $image_path = 'images/products/' . $filename;
-                        $has_uploaded_new_image = true;
+                        $has_new_image = true;
                     }
                 }
 
-                // --- KEY FIX: USE GALLERY IMAGE IF NO SPECIFIC IMAGE ---
-                // If user didn't upload a specific variant image, use the first gallery image
-                if (!$has_uploaded_new_image && $gallery_fallback_image) {
-                    $image_path = $gallery_fallback_image;
+                if (!$v_id && !$has_new_image && $gallery_fallback) {
+                    $image_path = $gallery_fallback;
                 }
 
                 if ($v_id) {
@@ -134,8 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $sql = "UPDATE ITEM SET DESIGNER_ID=?, ITEM_CATEGORY=?, ITEM_NAME=?, ITEM_DESCRIPTION=?, ITEM_MATERIAL=?, ITEM_PRICE=?, ITEM_STOCK=?, ITEM_TAGS=?, PARENT_ID=?, IS_ENGRAVABLE=?, GALLERY_IMAGES=?";
                     $params = [$designer_id, $item_cat, $v_name, $item_desc, $v_mat, $v_price, $v_stock, $item_tags, $final_parent_id, $is_engravable, $gallery_json];
 
-                    // Only update image column if we actually have an image path (from upload or fallback)
-                    // This ensures we populate it if it was missing, or update it if changed.
                     if ($image_path) {
                         $sql .= ", ITEM_IMAGE=?";
                         $params[] = $image_path;
@@ -211,10 +197,6 @@ if (!empty($_GET['search'])) {
 $items_per_page = 10;
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $items_per_page;
-$sort_by = $_GET['sort'] ?? 'item_id_desc';
-$sort_map = ['item_id_desc' => 'ORDER BY i.ITEM_ID DESC', 'name_asc' => 'ORDER BY i.ITEM_NAME ASC', 'price_low' => 'ORDER BY i.ITEM_PRICE ASC', 'price_high' => 'ORDER BY i.ITEM_PRICE DESC', 'stock_low' => 'ORDER BY i.ITEM_STOCK ASC'];
-$order_clause = $sort_map[$sort_by] ?? $sort_map['item_id_desc'];
-
 $where_sql = implode(' AND ', $where_clauses);
 
 $total_items = $pdo->prepare("SELECT COUNT(DISTINCT COALESCE(PARENT_ID, ITEM_ID)) FROM ITEM i WHERE $where_sql");
@@ -227,12 +209,24 @@ $sql = "SELECT i.*, d.DESIGNER_NAME, COUNT(*) as variant_count
         LEFT JOIN DESIGNER d ON i.DESIGNER_ID = d.DESIGNER_ID 
         WHERE $where_sql 
         GROUP BY COALESCE(i.PARENT_ID, i.ITEM_ID) 
-        $order_clause 
+        ORDER BY i.ITEM_ID DESC 
         LIMIT $items_per_page OFFSET $offset";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// --- FETCH LOW STOCK ITEMS ---
+$low_stock_threshold = 10;
+$low_stock_sql = "SELECT i.ITEM_ID, i.ITEM_NAME, i.ITEM_STOCK, i.ITEM_CATEGORY, d.DESIGNER_NAME
+                  FROM ITEM i
+                  LEFT JOIN DESIGNER d ON i.DESIGNER_ID = d.DESIGNER_ID
+                  WHERE i.ITEM_STOCK <= ?
+                  ORDER BY i.ITEM_STOCK ASC
+                  LIMIT 10";
+$low_stock_stmt = $pdo->prepare($low_stock_sql);
+$low_stock_stmt->execute([$low_stock_threshold]);
+$low_stock_items = $low_stock_stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -248,6 +242,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="../assets/css/dashboard.css">
 
     <style>
+        /* ... existing styles ... */
         .variant-badge {
             font-size: 0.7rem;
             background: #eff6ff;
@@ -409,6 +404,104 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             transition: all 0.3s ease;
         }
 
+        /* VARIANT LIST STYLES */
+        .variant-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .variant-header {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 60px 40px;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .variant-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .variant-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1fr 1fr 60px 40px;
+            gap: 12px;
+            align-items: center;
+            padding: 8px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            background: #fff;
+        }
+
+        .variant-row input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Variant Image Upload Button */
+        .row-upload-btn {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .row-upload-btn input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .variant-img-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Lightbox */
+        #imageLightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s;
+        }
+
+        #imageLightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        /* Tags & Gallery */
         .tags-scroll-container {
             max-height: 250px;
             overflow-y: auto;
@@ -416,94 +509,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: #ffffff;
-        }
-
-        .tag-category-group {
-            margin-bottom: 18px;
-            border-bottom: 1px dashed #e5e7eb;
-            padding-bottom: 12px;
-        }
-
-        .tag-category-group:last-child {
-            margin-bottom: 0;
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .tag-category-title {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 10px;
-        }
-
-        .checkbox-item label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: #374151;
-            cursor: pointer;
-            padding: 4px 0;
-            white-space: nowrap;
-        }
-
-        .checkbox-item input {
-            width: 16px;
-            height: 16px;
-            margin: 0;
-            accent-color: #3b82f6;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .tag-input-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        .tag-input-group select {
-            width: 120px;
-            padding: 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-        }
-
-        .tag-input-group input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-        }
-
-        .tag-add-btn {
-            padding: 0 16px;
-            background: #18181b;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .tag-add-btn:hover {
-            background: #333;
         }
 
         .gallery-upload-area {
@@ -514,11 +519,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background: #f8fafc;
             cursor: pointer;
             transition: 0.2s;
-        }
-
-        .gallery-upload-area:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
         }
 
         .gallery-preview {
@@ -559,98 +559,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             justify-content: center;
         }
 
-        #imageLightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.2s;
-        }
-
-        #imageLightbox img {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 4px;
-        }
-
-        .variant-container {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #ffffff;
-            overflow: hidden;
-        }
-
-        .variant-header {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr 40px;
-            gap: 12px;
-            background: #f8fafc;
-            padding: 10px 15px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-        }
-
-        .variant-list {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .variant-row {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr 40px;
-            gap: 12px;
-            align-items: center;
-            padding: 8px 15px;
-            border-bottom: 1px solid #f1f5f9;
-            background: #fff;
-        }
-
-        .variant-row input {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-
-        .row-upload-btn {
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 4px;
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-        }
-
-        .row-upload-btn input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .row-upload-btn.has-file {
-            background: #dcfce7;
-            color: #16a34a;
-            border-color: #86efac;
-        }
-
+        /* Misc */
         .btn-add-variant {
             width: 100%;
             padding: 12px;
@@ -716,6 +625,57 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
         }
 
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            color: #475569;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .page-link:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .page-link.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        .page-link.active:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .page-info {
+            margin-left: 16px;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
         .category-badge {
             background: #f3f4f6;
             padding: 2px 8px;
@@ -724,6 +684,122 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             color: #4b5563;
             font-weight: 600;
         }
+
+        /* Low Stock Alert Card */
+        .low-stock-card {
+            background: #fff;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .low-stock-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
+            border-bottom: 1px solid #fecaca;
+        }
+
+        .low-stock-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .low-stock-icon {
+            width: 40px;
+            height: 40px;
+            background: #fee2e2;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dc2626;
+            font-size: 1.25rem;
+        }
+
+        .low-stock-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #991b1b;
+            margin: 0;
+        }
+
+        .low-stock-subtitle {
+            font-size: 0.8rem;
+            color: #b91c1c;
+            margin: 0;
+        }
+
+        .low-stock-count {
+            background: #dc2626;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .low-stock-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .low-stock-table th {
+            background: #fef2f2;
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #991b1b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .low-stock-table td {
+            padding: 12px 16px;
+            border-top: 1px solid #fee2e2;
+            font-size: 0.875rem;
+            color: #1e293b;
+        }
+
+        .low-stock-table tr:hover {
+            background: #fef2f2;
+        }
+
+        .stock-critical {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stock-warning {
+            color: #d97706;
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .low-stock-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: #16a34a;
+            font-size: 0.9rem;
+        }
+
+        .low-stock-empty i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -731,7 +807,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div id="imageLightbox" onclick="this.style.display='none'">
         <img id="lightboxImg" src="" alt="Full Preview">
     </div>
-
     <aside class="sidebar">
         <div class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
@@ -771,16 +846,28 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <nav>
             <ul>
-                <li><a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a></li>
-                <li class="active"><a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                <li>
+                    <a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
+                </li>
+                <li class="active">
+                    <a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
                             </path>
-                        </svg> <span>Items/Catalog</span></a></li>
-                <li><a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a></li>
-                <li><a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a></li>
-                <li><a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a></li>
+                        </svg> <span>Items/Catalog</span></a>
+                </li>
+                <li class="active"><a href="charms.php"><i class='bx bxs-magic-wand'></i> <span>Charms</span></a></li>
+
+                <li>
+                    <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
+                </li>
+                <li>
+                    <a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
+                </li>
+                <li>
+                    <a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -800,15 +887,74 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div><?php endif; ?>
 
         <div class="catalog-container">
+            <!-- Low Stock Alert Card -->
+            <div class="low-stock-card">
+                <div class="low-stock-header">
+                    <div class="low-stock-header-left">
+                        <div class="low-stock-icon">
+                            <i class='bx bx-error-circle'></i>
+                        </div>
+                        <div>
+                            <h3 class="low-stock-title">Low Stock Alert</h3>
+                            <p class="low-stock-subtitle">Items with stock at or below
+                                <?php echo $low_stock_threshold; ?> units</p>
+                        </div>
+                    </div>
+                    <?php if (count($low_stock_items) > 0): ?>
+                        <span class="low-stock-count"><?php echo count($low_stock_items); ?>
+                            item<?php echo count($low_stock_items) > 1 ? 's' : ''; ?></span>
+                    <?php endif; ?>
+                </div>
+                <?php if (count($low_stock_items) > 0): ?>
+                    <table class="low-stock-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Designer</th>
+                                <th>Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($low_stock_items as $low_item): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($low_item['ITEM_NAME']); ?></td>
+                                    <td><span
+                                            class="category-badge"><?php echo htmlspecialchars($low_item['ITEM_CATEGORY']); ?></span>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($low_item['DESIGNER_NAME'] ?? 'N/A'); ?></td>
+                                    <td>
+                                        <span
+                                            class="<?php echo $low_item['ITEM_STOCK'] <= 5 ? 'stock-critical' : 'stock-warning'; ?>">
+                                            <?php echo $low_item['ITEM_STOCK']; ?> left
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-icon btn-edit"
+                                            onclick="openModal('edit', <?php echo $low_item['ITEM_ID']; ?>)"
+                                            title="Edit to restock">
+                                            <i class='bx bx-edit'></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="low-stock-empty">
+                        <i class='bx bx-check-circle'></i>
+                        All items are well stocked!
+                    </div>
+                <?php endif; ?>
+            </div>
+
             <div class="filters-section">
-                <form method="GET"
-                    style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; width: 100%;">
-                    <div class="filter-group"><label>Search</label><input type="text" name="search"
+                <form method="GET" style="display: flex; gap: 15px; width: 100%;">
+                    <div class="filter-group" style="flex:1;"><label>Search</label><input type="text" name="search"
                             placeholder="Search..." value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
                     </div>
-                    <button type="submit" class="btn-filter"><i class='bx bx-search'></i> Filter</button>
-                    <a href="catalog.php" class="btn-filter"
-                        style="background:#f3f4f6; color:#333; text-decoration:none; text-align:center;">Reset</a>
+                    <button type="submit" class="btn-filter" style="margin-top:24px;">Filter</button>
                 </form>
                 <button class="btn-add-product" onclick="openModal('add')"><i class='bx bx-plus'></i> Add
                     Product</button>
@@ -819,7 +965,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="product-row" style="background: #f9fafb; font-weight: 600;">
                         <div>Image</div>
                         <div>Product Name</div>
-                        <div>Category/Tags</div>
+                        <div>Category</div>
                         <div>Price</div>
                         <div>Stock</div>
                         <div>Material</div>
@@ -828,14 +974,10 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($items as $item): ?>
                         <div class="product-row">
                             <div class="product-image">
-                                <?php if (!empty($item['ITEM_IMAGE'])): ?>
-                                    <?php
-                                    // 1. Remove any leading slash so we have a clean path (e.g. "images/products/img.jpg")
+                                <?php if (!empty($item['ITEM_IMAGE'])):
                                     $cleanPath = ltrim($item['ITEM_IMAGE'], '/');
-
-                                    // 2. Add "../" to tell the browser to go up one folder from 'admin' to 'tink'
                                     $displayUrl = '../' . $cleanPath;
-                                    ?>
+                                ?>
                                     <img src="<?php echo htmlspecialchars($displayUrl); ?>" alt="Product"
                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
                                 <?php else: ?>
@@ -848,24 +990,15 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="product-name">
                                 <?php echo htmlspecialchars($item['ITEM_NAME']); ?>
                                 <div style="font-size:0.75rem; color:#666;">
-                                    <?php echo htmlspecialchars($item['DESIGNER_NAME']); ?>
-                                </div>
+                                    <?php echo htmlspecialchars($item['DESIGNER_NAME']); ?></div>
                                 <?php if ($item['variant_count'] > 1): ?>
-                                    <span class="variant-badge">
-                                        <?php echo $item['variant_count']; ?> Variants
-                                    </span>
+                                    <span class="variant-badge"><?php echo $item['variant_count']; ?> Variants</span>
                                 <?php endif; ?>
                             </div>
-                            <div>
-                                <span class="category-badge"><?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?></span>
-                                <?php if ($item['PARENT_ID']): ?>
-                                    <div style="margin-top:5px; font-size:0.7rem; color:#666;"><i class='bx bx-link'></i>
-                                        Linked: <?php echo $item['PARENT_ID']; ?></div>
-                                <?php endif; ?>
+                            <div><span class="category-badge"><?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?></span>
                             </div>
                             <div>RM <?php echo number_format($item['ITEM_PRICE'], 2); ?></div>
-                            <div>
-                                <span
+                            <div><span
                                     class="stock-status <?php echo $item['ITEM_STOCK'] > 15 ? 'stock-high' : 'stock-low'; ?>"><?php echo $item['ITEM_STOCK']; ?></span>
                             </div>
                             <div><?php echo htmlspecialchars($item['ITEM_MATERIAL']); ?></div>
@@ -882,12 +1015,39 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <div class="pagination">
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <a href="?page=<?php echo $i; ?>&sort=<?php echo $sort_by; ?>"
-                        class="<?php echo $i == $page ? 'active' : ''; ?>"><?php echo $i; ?></a>
-                <?php endfor; ?>
-            </div>
+            <?php if ($total_pages > 1): ?>
+                <div class="pagination">
+                    <?php
+                    $search_param = !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                    ?>
+
+                    <?php if ($page > 1): ?>
+                        <a href="?page=1<?php echo $search_param; ?>" class="page-link">&laquo; First</a>
+                        <a href="?page=<?php echo $page - 1; ?><?php echo $search_param; ?>" class="page-link">&lsaquo; Prev</a>
+                    <?php endif; ?>
+
+                    <?php
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+
+                    for ($i = $start_page; $i <= $end_page; $i++):
+                    ?>
+                        <a href="?page=<?php echo $i; ?><?php echo $search_param; ?>"
+                            class="page-link <?php echo $i === $page ? 'active' : ''; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?page=<?php echo $page + 1; ?><?php echo $search_param; ?>" class="page-link">Next &rsaquo;</a>
+                        <a href="?page=<?php echo $total_pages; ?><?php echo $search_param; ?>" class="page-link">Last
+                            &raquo;</a>
+                    <?php endif; ?>
+
+                    <span class="page-info">Page <?php echo $page; ?> of <?php echo $total_pages; ?>
+                        (<?php echo $total_items; ?> items)</span>
+                </div>
+            <?php endif; ?>
         </div>
     </main>
 
@@ -897,114 +1057,72 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h2 id="modalTitle">Product Details</h2>
                 <button class="btn-close" onclick="closeModal()"><i class='bx bx-x'></i></button>
             </div>
-
             <div class="modal-body">
                 <form id="productForm" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="save_product">
                     <input type="hidden" name="existing_gallery_images" id="existingGalleryImages" value="">
 
                     <div class="form-section">
-                        <h3 class="form-section-title">Base Product Information</h3>
-
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label>Product Name</label>
-                            <input type="text" id="baseName" onkeyup="syncName()" placeholder="e.g. Floral Signet Ring"
-                                required>
-                        </div>
-
+                        <h3 class="form-section-title">Base Information</h3>
+                        <div class="form-group"><label>Product Name</label><input type="text" id="baseName"
+                                onkeyup="syncName()" placeholder="e.g. Floral Signet Ring" required></div>
                         <div class="form-grid-2">
                             <div>
-                                <div class="form-group">
-                                    <label>Category</label>
-                                    <select name="item_category" id="itemCategory" required>
+                                <div class="form-group"><label>Category</label><select name="item_category"
+                                        id="itemCategory" required>
                                         <option value="">Select category...</option>
                                         <option value="Necklaces">Necklaces</option>
                                         <option value="Earrings">Earrings</option>
                                         <option value="Bracelets">Bracelets</option>
                                         <option value="Rings">Rings</option>
                                         <option value="Charms">Charms</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Designer</label>
-                                    <select name="designer_id" id="designerId" required>
+                                    </select></div>
+                                <div class="form-group"><label>Designer</label><select name="designer_id"
+                                        id="designerId" required>
                                         <option value="">Select designer...</option>
-                                        <?php foreach ($designers_list as $d): ?>
-                                            <option value="<?php echo $d['DESIGNER_ID']; ?>">
+                                        <?php foreach ($designers_list as $d): ?><option
+                                                value="<?php echo $d['DESIGNER_ID']; ?>">
                                                 <?php echo htmlspecialchars($d['DESIGNER_NAME']); ?></option>
                                         <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="form-group" id="parentIdContainer">
-                                    <label for="parentId">Link to Parent Product (Charms)</label>
-                                    <select name="parent_id" id="parentId">
+                                    </select></div>
+                                <div class="form-group" id="parentIdContainer"><label for="parentId">Link to Parent
+                                        Product (Charms)</label><select name="parent_id" id="parentId">
                                         <option value="">-- No Parent (New Base) --</option>
-                                        <?php foreach ($parent_items as $p): ?>
-                                            <option value="<?php echo $p['ITEM_ID']; ?>">
+                                        <?php foreach ($parent_items as $p): ?><option
+                                                value="<?php echo $p['ITEM_ID']; ?>">
                                                 <?php echo htmlspecialchars($p['ITEM_NAME']); ?></option>
                                         <?php endforeach; ?>
-                                    </select>
-                                </div>
+                                    </select></div>
                             </div>
                             <div>
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea name="item_description" id="itemDescription" required></textarea>
+                                <div class="form-group"><label>Description</label><textarea name="item_description"
+                                        id="itemDescription" required></textarea></div>
+
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <div
+                                        style="display:flex; align-items:center; gap:8px; border:1px solid #e2e8f0; padding:10px; border-radius:6px; background:#f8fafc;">
+                                        <input type="checkbox" name="is_engravable" id="isEngravable" value="1"
+                                            style="width:auto; height:18px; width:18px; cursor:pointer;">
+                                        <label for="isEngravable"
+                                            style="margin:0; cursor:pointer; font-weight:600; color:#475569;">Allow
+                                            Custom Engraving?</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-section">
-                        <h3 class="form-section-title">Product Gallery</h3>
+                        <h3 class="form-section-title">Product Gallery (Shared)</h3>
                         <div class="gallery-upload-section">
                             <div class="gallery-upload-area" onclick="document.getElementById('galleryUpload').click()">
                                 <input type="file" id="galleryUpload" name="base_item_images[]" multiple
                                     accept="image/*" onchange="handleGalleryUpload(event)">
-                                <div class="gallery-upload-text">
-                                    <i class='bx bx-cloud-upload'></i>
-                                    <strong>Click to upload multiple images</strong>
-                                </div>
+                                <div class="gallery-upload-text"><i class='bx bx-cloud-upload'></i><strong>Click to
+                                        upload multiple images</strong></div>
                             </div>
                             <div class="gallery-preview" id="galleryPreview"></div>
                         </div>
-                    </div>
-
-                    <div class="form-section">
-                        <h3 class="form-section-title">Tags & Attributes</h3>
-                        <div class="tags-scroll-container">
-                            <?php foreach ($tag_categories as $category => $tags): ?>
-                                <div class="tag-category-group" id="cat-group-<?php echo $category; ?>">
-                                    <div class="tag-category-title"><?php echo $category; ?></div>
-                                    <div class="checkbox-grid">
-                                        <?php foreach ($tags as $stag): ?>
-                                            <div class="checkbox-item">
-                                                <label>
-                                                    <input type="checkbox" name="item_tags_select[]"
-                                                        value="<?php echo $stag; ?>" class="tag-checkbox">
-                                                    <?php echo $stag; ?>
-                                                </label>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-
-                        <div class="tag-input-group">
-                            <select id="newTagCategory">
-                                <?php foreach (array_keys($tag_categories) as $cat) echo "<option value='$cat'>$cat</option>"; ?>
-                            </select>
-                            <input type="text" id="newTagName" placeholder="Add new tag name..." />
-                            <button type="button" class="tag-add-btn" onclick="addNewTag()"><i class='bx bx-plus'></i>
-                                Add</button>
-                        </div>
-
-                        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;">
-                            <input type="checkbox" name="is_engravable" id="isEngravable" value="1"
-                                style="width:16px; height:16px; accent-color:#3b82f6;">
-                            <span style="font-size:0.875rem; color:#334155;">Allow Engraving</span>
-                        </label>
                     </div>
 
                     <div class="form-section">
@@ -1025,7 +1143,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </form>
             </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
                 <button type="submit" form="productForm" class="btn-submit">Save Product(s)</button>
@@ -1042,9 +1159,10 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
         let galleryFiles = [];
         let existingGallery = [];
 
+        // --- Init & Helper Functions ---
         $(document).ready(function() {
             $('#parentId').select2({
-                placeholder: '-- No Parent (New Base) --',
+                placeholder: '-- No Parent --',
                 allowClear: true,
                 width: '100%'
             });
@@ -1059,28 +1177,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         function syncName() {
             const base = document.getElementById('baseName').value;
-            document.querySelectorAll('input[name="var_name[]"]').forEach(input => {
-                input.value = base;
-            });
-        }
-
-        function addNewTag() {
-            const cat = document.getElementById('newTagCategory').value;
-            const name = document.getElementById('newTagName').value.trim();
-            if (!name) return;
-            const existingInputs = document.querySelectorAll(`input[name="item_tags_select[]"][value="${name}"]`);
-            if (existingInputs.length > 0) {
-                existingInputs[0].checked = true;
-                document.getElementById('newTagName').value = '';
-                return;
-            }
-            const wrapper = document.querySelector(`#cat-group-${cat} .checkbox-grid`);
-            const div = document.createElement('div');
-            div.className = 'checkbox-item';
-            div.innerHTML =
-                `<label><input type="checkbox" name="item_tags_select[]" value="${name}" class="tag-checkbox" checked> ${name}</label>`;
-            wrapper.appendChild(div);
-            document.getElementById('newTagName').value = '';
+            document.querySelectorAll('input[name^="var_name"]').forEach(input => input.value = base);
         }
 
         function handleGalleryUpload(e) {
@@ -1095,7 +1192,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             existingGallery.forEach((url, index) => {
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
-                // FIXED: Handle both path formats for preview
                 const displayPath = '../' + url.replace(/^\//, '');
                 item.onclick = (e) => {
                     if (!e.target.closest('.gallery-item-remove')) openLightbox(displayPath);
@@ -1148,7 +1244,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             galleryFiles = [];
             existingGallery = [];
             updateGalleryPreview();
-            document.querySelectorAll('.tag-checkbox').forEach(cb => cb.checked = false);
             $('#parentId').val(null).trigger('change');
             $('#parentIdContainer').hide();
 
@@ -1164,42 +1259,23 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         $('#itemCategory').trigger('change');
                         document.getElementById('designerId').value = baseItem.DESIGNER_ID;
                         document.getElementById('itemDescription').value = baseItem.ITEM_DESCRIPTION;
-                        document.getElementById('isEngravable').checked = (baseItem.IS_ENGRAVABLE == 1);
                         if (baseItem.PARENT_ID) $('#parentId').val(baseItem.PARENT_ID).trigger('change');
 
-                        if (baseItem.ITEM_TAGS) {
-                            const tags = baseItem.ITEM_TAGS.split(',').map(s => s.trim());
-                            tags.forEach(t => {
-                                let found = false;
-                                document.querySelectorAll('.tag-checkbox').forEach(cb => {
-                                    if (cb.value === t) {
-                                        cb.checked = true;
-                                        found = true;
-                                    }
-                                });
-                                if (!found) {
-                                    const wrapper = document.querySelector(
-                                        `#cat-group-Features .checkbox-grid`);
-                                    const div = document.createElement('div');
-                                    div.className = 'checkbox-item';
-                                    div.innerHTML =
-                                        `<label><input type="checkbox" name="item_tags_select[]" value="${t}" class="tag-checkbox" checked> ${t}</label>`;
-                                    wrapper.appendChild(div);
-                                }
-                            });
-                        }
+                        // LOAD CHECKBOX STATE
+                        document.getElementById('isEngravable').checked = (baseItem.IS_ENGRAVABLE == 1);
+
                         if (baseItem.GALLERY_IMAGES) {
                             try {
                                 existingGallery = JSON.parse(baseItem.GALLERY_IMAGES);
                                 updateGalleryPreview();
                             } catch (e) {}
                         }
-                        items.forEach(item => {
-                            addVariantRow(item);
-                        });
+                        items.forEach(item => addVariantRow(item));
                     });
             } else {
                 document.getElementById('modalTitle').textContent = 'Add New Product';
+                // RESET CHECKBOX
+                document.getElementById('isEngravable').checked = false;
                 addVariantRow();
             }
             modal.classList.add('active');
@@ -1209,6 +1285,7 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             modal.classList.remove('active');
         }
 
+        // --- UPDATED: VARIANT ROW WITH PREVIEW LOGIC ---
         function addVariantRow(data = null) {
             const row = document.createElement('div');
             row.className = 'variant-row';
@@ -1218,20 +1295,54 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const stock = data ? data.ITEM_STOCK : '';
             const id = data ? data.ITEM_ID : '';
 
+            // Image Logic: Check ITEM_IMAGE first
+            let imgHTML = '<i class="bx bx-upload"></i>';
+            let imgClass = '';
+
+            if (data && data.ITEM_IMAGE) {
+                const cleanPath = '../' + data.ITEM_IMAGE.replace(/^\//, '');
+                imgHTML =
+                    `<img src="${cleanPath}" class="variant-img-preview" onclick="event.preventDefault(); openLightbox('${cleanPath}')">`;
+                imgClass = 'has-file';
+            }
+
             row.innerHTML = `
-                <input type="hidden" name="var_id[]" value="${id}">
-                <input type="text" name="var_name[]" value="${name}" placeholder="Name" required>
-                <input type="text" name="var_material[]" value="${mat}" placeholder="Material" required>
-                <input type="number" step="0.01" name="var_price[]" value="${price}" placeholder="0.00" required>
-                <input type="number" name="var_stock[]" value="${stock}" placeholder="0" required>
-                <div style="text-align:center"><label class="row-upload-btn ${data && data.ITEM_IMAGE ? 'has-file' : ''}"><i class='bx bx-upload'></i><input type="file" name="var_image[]" onchange="this.parentElement.classList.add('has-file')"></label></div>
-                <button type="button" class="btn-remove-variant" onclick="this.parentElement.remove()"><i class='bx bx-x'></i></button>
-            `;
+            <input type="hidden" name="var_id[]" value="${id}">
+            <input type="text" name="var_name[]" value="${name}" placeholder="Name" required>
+            <input type="text" name="var_material[]" value="${mat}" placeholder="Material" required>
+            <input type="number" step="0.01" name="var_price[]" value="${price}" placeholder="0.00" required>
+            <input type="number" name="var_stock[]" value="${stock}" placeholder="0" required>
+            
+            <div style="text-align:center; position: relative;">
+                <label class="row-upload-btn ${imgClass}">
+                    ${imgHTML}
+                    <input type="file" name="var_image[]" onchange="previewVariantImage(this)">
+                </label>
+            </div>
+            
+            <button type="button" class="btn-remove-variant" onclick="this.parentElement.remove()"><i class='bx bx-x'></i></button>
+        `;
             variantsContainer.appendChild(row);
         }
 
+        function previewVariantImage(input) {
+            const label = input.parentElement;
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Clear existing icon/image content
+                    label.innerHTML =
+                        `<img src="${e.target.result}" class="variant-img-preview" onclick="event.preventDefault(); openLightbox('${e.target.result}')">`;
+                    label.appendChild(input); // Re-append input to keep it functional
+                    label.classList.add('has-file');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         function deleteProduct(id) {
-            if (confirm('Delete this product (and all variants)?')) {
+            if (confirm('Delete this product?')) {
                 const f = document.createElement('form');
                 f.method = 'POST';
                 f.innerHTML =

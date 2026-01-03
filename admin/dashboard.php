@@ -163,6 +163,8 @@ $orderStatus = $pdo->query($statusSql)->fetchAll(PDO::FETCH_ASSOC);
                             </path>
                         </svg> <span>Items/Catalog</span></a>
                 </li>
+                <li class="active"><a href="charms.php"><i class='bx bxs-magic-wand'></i> <span>Charms</span></a></li>
+
                 <li>
                     <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
                 </li>

@@ -20,13 +20,17 @@ if (!$designer_info) {
     exit;
 }
 
-// 3. FETCH ITEMS FOR THIS DESIGNER
-$sql = "SELECT * FROM ITEM WHERE DESIGNER_ID = ? AND ITEM_ACTIVE = 1 ORDER BY ITEM_ID DESC";
+// 3. FETCH ITEMS FOR THIS DESIGNER (with variant grouping like catalog)
+$sql = "SELECT ITEM.*, DESIGNER.DESIGNER_NAME
+        FROM ITEM
+        LEFT JOIN DESIGNER ON ITEM.DESIGNER_ID = DESIGNER.DESIGNER_ID
+        WHERE ITEM.DESIGNER_ID = ? AND ITEM_ACTIVE = 1
+        ORDER BY ITEM_ID DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$designer_id]);
 $raw_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 4. GROUP VARIANTS
+// 4. GROUP VARIANTS (same logic as catalog.php)
 $grouped_products = [];
 foreach ($raw_items as $item) {
     $key = $item['PARENT_ID'] ? $item['PARENT_ID'] : $item['ITEM_ID'];
@@ -50,6 +54,7 @@ foreach ($raw_items as $item) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/catalog.css">
     <link rel="stylesheet" href="assets/css/designer-selected.css">
 </head>
 
@@ -86,7 +91,7 @@ foreach ($raw_items as $item) {
                 ?>
                     <div class="product-card">
                         <div class="image-wrapper">
-                            <a href="product_details.php?id=<?= $base['ITEM_ID'] ?>">
+                            <a href="product_detail.php?id=<?= $base['ITEM_ID'] ?>">
                                 <img src="<?= htmlspecialchars($imgUrl) ?>" id="img-<?= $base['ITEM_ID'] ?>"
                                     alt="<?= htmlspecialchars($base['ITEM_NAME']) ?>">
                             </a>
@@ -95,9 +100,13 @@ foreach ($raw_items as $item) {
                                 <div class="swatches">
                                     <?php foreach ($variants as $v):
                                         $mat = strtolower($v['ITEM_MATERIAL']);
-                                        $cls = 'silver'; // Default
-                                        if (strpos($mat, 'gold') !== false) $cls = 'gold';
-                                        if (strpos($mat, 'rose') !== false) $cls = 'rose';
+                                        // Determine swatch color - check rose gold first (before gold)
+                                        $cls = 'silver';
+                                        if (strpos($mat, 'rose') !== false) {
+                                            $cls = 'rose';
+                                        } elseif (strpos($mat, 'gold') !== false && strpos($mat, 'sterling') === false) {
+                                            $cls = 'gold';
+                                        }
 
                                         // Variant Image Fix
                                         $vImgUrl = !empty($v['ITEM_IMAGE']) ? ltrim($v['ITEM_IMAGE'], '/') : '';
@@ -105,20 +114,23 @@ foreach ($raw_items as $item) {
                                         <span class="swatch <?= $cls ?>" onmouseover="updateCard(this, '<?= $base['ITEM_ID'] ?>')"
                                             data-image="<?= htmlspecialchars($vImgUrl) ?>"
                                             data-price="RM <?= number_format($v['ITEM_PRICE'], 2) ?>"
-                                            data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>">
+                                            data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>" data-id="<?= $v['ITEM_ID'] ?>">
                                         </span>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
 
-                        <div class="product-info">
-                            <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
-                                <?= htmlspecialchars($base['ITEM_NAME']) ?>
-                            </div>
-                            <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
-                                RM <?= number_format($base['ITEM_PRICE'], 2) ?>
-                            </div>
+                        <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
+                            <?= htmlspecialchars($base['ITEM_NAME']) ?>
+                        </div>
+
+                        <div class="designer">
+                            DESIGNED BY: <?= htmlspecialchars($base['DESIGNER_NAME'] ?? $designer_info['DESIGNER_NAME']) ?>
+                        </div>
+
+                        <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
+                            RM <?= number_format($base['ITEM_PRICE'], 2) ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

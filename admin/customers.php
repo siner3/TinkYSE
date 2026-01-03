@@ -97,25 +97,25 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
     <link rel="stylesheet" href="../assets/css/dashboard.css">
 
     <style>
-    /* Special style for the Order Link in Modal */
-    .order-link {
-        color: var(--blue-text);
-        font-weight: 600;
-        font-family: monospace;
-        text-decoration: none;
-        padding: 4px 8px;
-        background: var(--blue-bg);
-        border-radius: 4px;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
+        /* Special style for the Order Link in Modal */
+        .order-link {
+            color: var(--blue-text);
+            font-weight: 600;
+            font-family: monospace;
+            text-decoration: none;
+            padding: 4px 8px;
+            background: var(--blue-bg);
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-    .order-link:hover {
-        background: #2563eb;
-        color: white;
-    }
+        .order-link:hover {
+            background: #2563eb;
+            color: white;
+        }
     </style>
 </head>
 
@@ -126,10 +126,10 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
             <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
                 <defs>
                     <style>
-                    .cls-1 {
-                        fill: #000;
-                        stroke-width: 0px;
-                    }
+                        .cls-1 {
+                            fill: #000;
+                            stroke-width: 0px;
+                        }
                     </style>
                 </defs>
                 <path class="cls-1"
@@ -160,17 +160,28 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
         </div>
         <nav>
             <ul>
-                <li><a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a></li>
-                <li><a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                <li>
+                    <a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
+                </li>
+                <li>
+                    <a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
-                            <!--Boxicons v3.0.6 https://boxicons.com | License  https://docs.boxicons.com/free-->
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
                             </path>
-                        </svg></i><span>Items/Catalog</span></a></li>
-                <li class="active"><a href="#"><i class='bx bxs-user-circle'></i> <span>Customers</span></a></li>
-                <li><a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a></li>
-                <li><a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a></li>
+                        </svg> <span>Items/Catalog</span></a>
+                </li>
+                <li><a href="charms.php"><i class='bx bxs-magic-wand'></i> <span>Charms</span></a></li>
+
+                <li class="active">
+                    <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
+                </li>
+                <li>
+                    <a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
+                </li>
+                <li>
+                    <a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -185,14 +196,14 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
         </header>
 
         <?php if (isset($success_msg)): ?>
-        <div class="alert alert-success">
-            <i class='bx bx-check-circle'></i> <?php echo $success_msg; ?>
-        </div>
+            <div class="alert alert-success">
+                <i class='bx bx-check-circle'></i> <?php echo $success_msg; ?>
+            </div>
         <?php endif; ?>
         <?php if (isset($error_msg)): ?>
-        <div class="alert alert-error">
-            <i class='bx bx-x-circle'></i> <?php echo $error_msg; ?>
-        </div>
+            <div class="alert alert-error">
+                <i class='bx bx-x-circle'></i> <?php echo $error_msg; ?>
+            </div>
         <?php endif; ?>
 
         <div class="kpi-grid">
@@ -238,8 +249,8 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
                     <i class='bx bx-search'></i> Search
                 </button>
                 <?php if ($search): ?>
-                <a href="customers.php" class="btn-cancel"
-                    style="height: 42px; margin-top: auto; display:flex; align-items:center; text-decoration:none;">Clear</a>
+                    <a href="customers.php" class="btn-cancel"
+                        style="height: 42px; margin-top: auto; display:flex; align-items:center; text-decoration:none;">Clear</a>
                 <?php endif; ?>
             </form>
         </div>
@@ -261,61 +272,61 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
                 </thead>
                 <tbody>
                     <?php if (count($customers) > 0): ?>
-                    <?php foreach ($customers as $c): ?>
-                    <tr>
-                        <td>#<?php echo $c['CUSTOMER_ID']; ?></td>
-                        <td>
-                            <div style="font-weight: 600; color: var(--text-primary);">
-                                <?php echo htmlspecialchars($c['CUSTOMER_NAME']); ?></div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                <?php echo htmlspecialchars($c['CUSTOMER_EMAIL']); ?></div>
-                        </td>
-                        <td><?php echo date('M d, Y', strtotime($c['CUSTOMER_DATE'])); ?></td>
-                        <td>
-                            <?php if ($c['total_orders'] > 0): ?>
-                            <span class="status-badge delivered"><?php echo $c['total_orders']; ?> orders</span>
-                            <?php else: ?>
-                            <span class="status-badge pending">No orders</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>RM<?php echo number_format($c['total_spent'], 2); ?></td>
-                        <td style="text-align: right;">
-                            <div class="action-buttons" style="justify-content: flex-end;">
-                                <button class="btn-icon" style="background: var(--blue-bg); color: var(--blue-text);"
-                                    title="View Order History"
-                                    onclick="openOrdersModal(<?php echo $c['CUSTOMER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($c['CUSTOMER_NAME'])); ?>')">
-                                    <i class='bx bx-shopping-bag'></i>
-                                </button>
+                        <?php foreach ($customers as $c): ?>
+                            <tr>
+                                <td>#<?php echo $c['CUSTOMER_ID']; ?></td>
+                                <td>
+                                    <div style="font-weight: 600; color: var(--text-primary);">
+                                        <?php echo htmlspecialchars($c['CUSTOMER_NAME']); ?></div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                        <?php echo htmlspecialchars($c['CUSTOMER_EMAIL']); ?></div>
+                                </td>
+                                <td><?php echo date('M d, Y', strtotime($c['CUSTOMER_DATE'])); ?></td>
+                                <td>
+                                    <?php if ($c['total_orders'] > 0): ?>
+                                        <span class="status-badge delivered"><?php echo $c['total_orders']; ?> orders</span>
+                                    <?php else: ?>
+                                        <span class="status-badge pending">No orders</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>RM<?php echo number_format($c['total_spent'], 2); ?></td>
+                                <td style="text-align: right;">
+                                    <div class="action-buttons" style="justify-content: flex-end;">
+                                        <button class="btn-icon" style="background: var(--blue-bg); color: var(--blue-text);"
+                                            title="View Order History"
+                                            onclick="openOrdersModal(<?php echo $c['CUSTOMER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($c['CUSTOMER_NAME'])); ?>')">
+                                            <i class='bx bx-shopping-bag'></i>
+                                        </button>
 
-                                <button class="btn-icon btn-edit" title="View Details"
-                                    onclick='openViewModal(<?php echo json_encode($c); ?>)'>
-                                    <i class='bx bx-show'></i>
-                                </button>
-                                <button class="btn-icon btn-delete" title="Delete User"
-                                    onclick="deleteCustomer(<?php echo $c['CUSTOMER_ID']; ?>)">
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
+                                        <button class="btn-icon btn-edit" title="View Details"
+                                            onclick='openViewModal(<?php echo json_encode($c); ?>)'>
+                                            <i class='bx bx-show'></i>
+                                        </button>
+                                        <button class="btn-icon btn-delete" title="Delete User"
+                                            onclick="deleteCustomer(<?php echo $c['CUSTOMER_ID']; ?>)">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                    <tr>
-                        <td colspan="6" style="text-align:center; padding: 20px;">No customers found.</td>
-                    </tr>
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding: 20px;">No customers found.</td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
 
             <?php if ($total_pages > 1): ?>
-            <div class="pagination">
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"
-                    class="<?php echo $i === $page ? 'active' : ''; ?>">
-                    <?php echo $i; ?>
-                </a>
-                <?php endfor; ?>
-            </div>
+                <div class="pagination">
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"
+                            class="<?php echo $i === $page ? 'active' : ''; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+                </div>
             <?php endif; ?>
         </div>
     </main>
@@ -367,10 +378,10 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
     </div>
 
     <script>
-    // --- PROFILE MODAL LOGIC ---
-    function openViewModal(data) {
-        const viewBody = document.getElementById('viewModalBody');
-        let html = `
+        // --- PROFILE MODAL LOGIC ---
+        function openViewModal(data) {
+            const viewBody = document.getElementById('viewModalBody');
+            let html = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div>
                         <label class="stat-label">Full Name</label>
@@ -408,48 +419,48 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
                     </div>
                 </div>
             `;
-        viewBody.innerHTML = html;
-        document.getElementById('viewModal').classList.add('active');
-    }
+            viewBody.innerHTML = html;
+            document.getElementById('viewModal').classList.add('active');
+        }
 
 
-    // --- ORDERS MODAL LOGIC (FIXED) ---
-    function openOrdersModal(customerId, customerName) {
-        const modal = document.getElementById('ordersModal');
-        const title = document.getElementById('ordersModalTitle');
-        const loader = document.getElementById('ordersLoading');
-        const body = document.getElementById('ordersBody');
-        const list = document.getElementById('ordersList');
-        const noMsg = document.getElementById('noOrdersMsg');
+        // --- ORDERS MODAL LOGIC (FIXED) ---
+        function openOrdersModal(customerId, customerName) {
+            const modal = document.getElementById('ordersModal');
+            const title = document.getElementById('ordersModalTitle');
+            const loader = document.getElementById('ordersLoading');
+            const body = document.getElementById('ordersBody');
+            const list = document.getElementById('ordersList');
+            const noMsg = document.getElementById('noOrdersMsg');
 
-        title.innerText = `Orders: ${customerName}`;
-        modal.classList.add('active');
-        loader.style.display = 'block';
-        body.style.display = 'none'; // Hide list until loaded
+            title.innerText = `Orders: ${customerName}`;
+            modal.classList.add('active');
+            loader.style.display = 'block';
+            body.style.display = 'none'; // Hide list until loaded
 
-        // Fetch Orders from API
-        // Ensure path matches where you saved the file above
-        fetch(`api/get-customer-orders.php?id=${customerId}`)
-            .then(res => res.json())
-            .then(data => {
-                loader.style.display = 'none';
-                body.style.display = 'block';
-                list.innerHTML = '';
+            // Fetch Orders from API
+            // Ensure path matches where you saved the file above
+            fetch(`api/get-customer-orders.php?id=${customerId}`)
+                .then(res => res.json())
+                .then(data => {
+                    loader.style.display = 'none';
+                    body.style.display = 'block';
+                    list.innerHTML = '';
 
-                if (Array.isArray(data) && data.length > 0) {
-                    noMsg.style.display = 'none';
-                    data.forEach(order => {
-                        const dateObj = new Date(order.ORDER_DATE);
-                        const dateStr = dateObj.toLocaleDateString();
-                        const timeStr = dateObj.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
+                    if (Array.isArray(data) && data.length > 0) {
+                        noMsg.style.display = 'none';
+                        data.forEach(order => {
+                            const dateObj = new Date(order.ORDER_DATE);
+                            const dateStr = dateObj.toLocaleDateString();
+                            const timeStr = dateObj.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
 
-                        // Parse total safely
-                        const totalAmount = parseFloat(order.ORDER_TOTAL || 0).toFixed(2);
+                            // Parse total safely
+                            const totalAmount = parseFloat(order.ORDER_TOTAL || 0).toFixed(2);
 
-                        const row = `
+                            const row = `
                             <tr>
                                 <td>
                                     <a href="orders.php?search=${order.ORDER_ID}" class="order-link" title="Manage Order #${order.ORDER_ID}">
@@ -464,49 +475,49 @@ $stats_active = $pdo->query("SELECT COUNT(DISTINCT CUSTOMER_ID) FROM `ORDER`")->
                                 <td style="text-align: right; font-weight:600;">RM ${totalAmount}</td>
                             </tr>
                         `;
-                        list.innerHTML += row;
-                    });
-                } else {
+                            list.innerHTML += row;
+                        });
+                    } else {
+                        noMsg.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    loader.style.display = 'none';
                     noMsg.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                loader.style.display = 'none';
-                noMsg.style.display = 'block';
-                noMsg.innerText = "Error loading orders.";
-            });
-    }
-    // Shared Close Function
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-    }
-
-    function deleteCustomer(id) {
-        if (confirm(
-                'Are you sure? This will delete the customer profile. If they have active orders, they cannot be deleted.'
-            )) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.innerHTML =
-                `<input type="hidden" name="action" value="delete_customer"><input type="hidden" name="customer_id" value="${id}">`;
-            document.body.appendChild(form);
-            form.submit();
+                    noMsg.innerText = "Error loading orders.";
+                });
         }
-    }
-
-    // Close on outside click
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.classList.remove('active');
+        // Shared Close Function
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
-    }
 
-    // Auto-hide alerts
-    setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(el => el.style.display = 'none');
-    }, 4000);
+        function deleteCustomer(id) {
+            if (confirm(
+                    'Are you sure? This will delete the customer profile. If they have active orders, they cannot be deleted.'
+                )) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML =
+                    `<input type="hidden" name="action" value="delete_customer"><input type="hidden" name="customer_id" value="${id}">`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Close on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Auto-hide alerts
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(el => el.style.display = 'none');
+        }, 4000);
     </script>
 </body>
 

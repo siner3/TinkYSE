@@ -3,27 +3,47 @@ session_start();
 
 // Check if the admin_id session variable exists
 if (!isset($_SESSION['admin_id'])) {
-    // If not logged in, redirect to the login page
     header('Location: login.php');
     exit;
 }
 
-require_once '../config.php'; // Your database connection
+require_once '../config.php';
+
 // --- HANDLE ACTIONS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
+    // 1. UPDATE STATUS & TRACKING
     if ($_POST['action'] === 'update_status') {
         $order_id = intval($_POST['order_id']);
         $new_status = $_POST['status'];
+
         try {
+            // A. Update Order Status
             $stmt = $pdo->prepare("UPDATE `ORDER` SET ORDER_STATUS = ? WHERE ORDER_ID = ?");
             $stmt->execute([$new_status, $order_id]);
+
+            // B. If Shipped, Update Tracking Number in CART table
+            if ($new_status === 'shipped' && !empty($_POST['tracking_id'])) {
+                $tracking_id = trim($_POST['tracking_id']);
+
+                // Find the Cart ID linked to this Order
+                $stmtCart = $pdo->prepare("SELECT CART_ID FROM `ORDER` WHERE ORDER_ID = ?");
+                $stmtCart->execute([$order_id]);
+                $cart_id = $stmtCart->fetchColumn();
+
+                if ($cart_id) {
+                    $stmtTrack = $pdo->prepare("UPDATE CART SET TRACKING_ID = ? WHERE CART_ID = ?");
+                    $stmtTrack->execute([$tracking_id, $cart_id]);
+                }
+            }
+
             $success_msg = "Order #$order_id updated to " . ucfirst($new_status);
         } catch (Exception $e) {
             $error_msg = "Error: " . $e->getMessage();
         }
     }
 
+    // 2. DELETE ORDER
     if ($_POST['action'] === 'delete_order') {
         $order_id = intval($_POST['order_id']);
         try {
@@ -47,7 +67,6 @@ $where = "1=1";
 $params = [];
 
 if ($search) {
-    // DIRECT JOIN IS NOW POSSIBLE!
     $where .= " AND (o.ORDER_ID LIKE ? OR c.CUSTOMER_NAME LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -57,15 +76,19 @@ if ($status_filter) {
     $params[] = $status_filter;
 }
 
-// SIMPLIFIED QUERY (Removed Cart Join)
-$join_sql = "FROM `ORDER` o JOIN CUSTOMER c ON o.CUSTOMER_ID = c.CUSTOMER_ID";
+// JOIN ORDER + CUSTOMER + CART (To get Tracking ID)
+$join_sql = "FROM `ORDER` o 
+             JOIN CUSTOMER c ON o.CUSTOMER_ID = c.CUSTOMER_ID
+             LEFT JOIN CART ca ON o.CART_ID = ca.CART_ID";
 
+// Count Total
 $count_stmt = $pdo->prepare("SELECT COUNT(*) $join_sql WHERE $where");
 $count_stmt->execute($params);
 $total_orders = $count_stmt->fetchColumn();
 $total_pages = ceil($total_orders / $limit);
 
-$sql = "SELECT o.*, c.CUSTOMER_NAME, 
+// Fetch Rows
+$sql = "SELECT o.*, c.CUSTOMER_NAME, ca.TRACKING_ID,
         (SELECT SUM(CARTITEM_QUANTITY) FROM CARTITEM WHERE CART_ID = o.CART_ID) as item_count 
         $join_sql 
         WHERE $where 
@@ -95,9 +118,29 @@ $stats = $pdo->query("SELECT
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <style>
+        /* Tracking Input Style inside Modal */
+        #trackingInput {
+            display: none;
+            /* Hidden by default */
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .status-shipped {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
 </head>
 
 <body>
+
     <aside class="sidebar">
         <div class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
@@ -137,27 +180,39 @@ $stats = $pdo->query("SELECT
         </div>
         <nav>
             <ul>
-                <li><a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a></li>
-                <li><a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                <li>
+                    <a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
+                </li>
+                <li>
+                    <a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
-                            <!--Boxicons v3.0.6 https://boxicons.com | License  https://docs.boxicons.com/free-->
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
                             </path>
-                        </svg> <span>Items/Catalog</span></a></li>
-                <li><a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a></li>
-                <li class="active"><a href="#"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a></li>
-                <li><a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a></li>
+                        </svg> <span>Items/Catalog</span></a>
+                </li>
+                <li><a href="charms.php"><i class='bx bxs-magic-wand'></i> <span>Charms</span></a></li>
+
+                <li>
+                    <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
+                </li>
+                <li class="active">
+                    <a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
+                </li>
+                <li>
+                    <a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
+                </li>
             </ul>
         </nav>
     </aside>
+
 
     <main class="main-content">
         <header>
             <h2>Order Management</h2>
             <div class="user-actions">
                 <span>Admin</span>
-                <a href="/admin/logout.php" class="logout"><i class='bx bx-log-out-circle'></i> Log Out</a>
+                <a href="logout.php" class="logout"><i class='bx bx-log-out-circle'></i> Log Out</a>
             </div>
         </header>
 
@@ -270,12 +325,14 @@ $stats = $pdo->query("SELECT
                                 <td data-label="Items"><?php echo $order['item_count'] ?? 0; ?> items</td>
                                 <td data-label="Total"><strong>RM
                                         <?php echo number_format($order['ORDER_TOTAL'], 2); ?></strong></td>
-                                <td data-label="Status"><span
+                                <td data-label="Status">
+                                    <span
                                         class="status-badge <?php echo strtolower($order['ORDER_STATUS']); ?>"><?php echo ucfirst($order['ORDER_STATUS']); ?></span>
                                 </td>
                                 <td data-label="Actions">
                                     <div class="action-buttons">
-                                        <button class="btn-icon btn-edit" onclick="viewOrder(<?php echo $order['ORDER_ID']; ?>)"
+                                        <button class="btn-icon btn-edit"
+                                            onclick="viewOrder(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['TRACKING_ID'] ?? ''; ?>')"
                                             title="View Details"><i class='bx bx-show'></i></button>
                                     </div>
                                 </td>
@@ -283,10 +340,7 @@ $stats = $pdo->query("SELECT
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);"><i
-                                    class='bx bx-search'
-                                    style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>No orders found
-                                matching your criteria.</td>
+                            <td colspan="7" style="text-align: center; padding: 40px;">No orders found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -356,18 +410,22 @@ $stats = $pdo->query("SELECT
                     <input type="hidden" name="order_id" id="formOrderId">
                     <div class="form-group">
                         <label>Update Order Status</label>
-                        <div style="display: flex; gap: 10px;">
-                            <select name="status" id="modalStatusSelect">
+                        <div style="display: flex; gap: 10px; flex-wrap:wrap;">
+                            <select name="status" id="modalStatusSelect" onchange="toggleTracking(this)">
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>
                                 <option value="shipped">Shipped</option>
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
+                            <input type="text" name="tracking_id" id="trackingInput"
+                                placeholder="Tracking ID (e.g. JNT-8812)">
+
                             <button type="submit" class="btn-submit">Update</button>
                         </div>
                     </div>
                 </form>
+
                 <div style="margin-top: 20px; text-align: center;">
                     <button type="button" onclick="deleteOrder()"
                         style="color: var(--danger); background: none; border: none; cursor: pointer; text-decoration: underline;">Delete
@@ -380,7 +438,20 @@ $stats = $pdo->query("SELECT
     <script>
         const modal = document.getElementById('orderModal');
 
-        function viewOrder(id) {
+        // Toggle Tracking Input Visibility
+        function toggleTracking(el) {
+            const input = document.getElementById('trackingInput');
+            if (el.value === 'shipped') {
+                input.style.display = 'block';
+                input.required = true;
+            } else {
+                input.style.display = 'none';
+                input.required = false;
+            }
+        }
+
+        // View Order (Takes existing tracking ID now)
+        function viewOrder(id, existingTracking) {
             modal.classList.add('active');
             document.getElementById('modalLoading').style.display = 'block';
             document.getElementById('modalBody').style.display = 'none';
@@ -394,29 +465,35 @@ $stats = $pdo->query("SELECT
                         return;
                     }
 
-                    document.getElementById('modalOrderTitle').innerText = 'Order Details';
                     document.getElementById('modalId').innerText = '#' + data.order.ORDER_ID;
                     document.getElementById('formOrderId').value = data.order.ORDER_ID;
                     document.getElementById('modalCustomer').innerText = data.order.CUSTOMER_NAME || 'Unknown';
                     document.getElementById('modalDate').innerText = new Date(data.order.ORDER_DATE)
-                        .toLocaleDateString() + ' ' + new Date(data.order.ORDER_DATE).toLocaleTimeString();
+                        .toLocaleDateString();
                     document.getElementById('modalTotal').innerText = 'RM ' + parseFloat(data.order.ORDER_TOTAL)
                         .toFixed(2);
-                    document.getElementById('modalStatusSelect').value = data.order.ORDER_STATUS;
+
+                    // Status & Tracking Logic
+                    const statusSelect = document.getElementById('modalStatusSelect');
+                    statusSelect.value = data.order.ORDER_STATUS;
+
+                    const trackInput = document.getElementById('trackingInput');
+                    // Use the passed existingTracking OR what's in the DB if available
+                    trackInput.value = existingTracking || '';
+
+                    // Trigger visibility check
+                    toggleTracking(statusSelect);
 
                     const tbody = document.getElementById('modalItems');
                     tbody.innerHTML = '';
-
                     if (data.items && data.items.length > 0) {
                         data.items.forEach(item => {
                             const total = (item.CARTITEM_PRICE * item.CARTITEM_QUANTITY).toFixed(2);
                             const row = `<tr>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="${item.ITEM_IMAGE || '../assets/img/no-img.png'}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
-                                    <span>${item.ITEM_NAME}</span>
-                                </div>
-                            </td>
+                            <td><div style="display: flex; align-items: center; gap: 10px;">
+                                <img src="${item.ITEM_IMAGE || '../assets/img/no-img.png'}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
+                                <span>${item.ITEM_NAME}</span>
+                            </div></td>
                             <td style="text-align: center;">${item.CARTITEM_QUANTITY}</td>
                             <td style="text-align: right;">RM ${parseFloat(item.CARTITEM_PRICE).toFixed(2)}</td>
                             <td style="text-align: right; font-weight: 600;">RM ${total}</td>
@@ -424,8 +501,7 @@ $stats = $pdo->query("SELECT
                             tbody.innerHTML += row;
                         });
                     } else {
-                        tbody.innerHTML =
-                            '<tr><td colspan="4" style="text-align:center; color: var(--text-secondary);">No items found in this order.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No items found.</td></tr>';
                     }
 
                     document.getElementById('modalLoading').style.display = 'none';
@@ -444,7 +520,7 @@ $stats = $pdo->query("SELECT
 
         function deleteOrder() {
             const id = document.getElementById('formOrderId').value;
-            if (confirm("Are you sure you want to delete Order #" + id + "? This cannot be undone.")) {
+            if (confirm("Are you sure you want to delete Order #" + id + "?")) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML =
@@ -458,6 +534,5 @@ $stats = $pdo->query("SELECT
         });
     </script>
 </body>
-
 
 </html>

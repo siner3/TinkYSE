@@ -89,24 +89,137 @@ if (!empty($product['PARENT_ID'])) {
     ];
 }
 
-// 5. FETCH REVIEWS
+// 5. FETCH REVIEWS (For entire product group)
+$review_ids = [$item_id];
+if (!empty($product['PARENT_ID'])) {
+    // If it's part of a group, get reviews for ALL siblings + parent
+    $grp_stmt = $pdo->prepare("SELECT ITEM_ID FROM ITEM WHERE PARENT_ID = ?");
+    $grp_stmt->execute([$product['PARENT_ID']]);
+    $sibling_ids = $grp_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Merge, unique, and re-index (array_values ensures sequential keys for PDO)
+    $review_ids = array_values(array_unique(array_merge($review_ids, $sibling_ids)));
+}
+
+// Create placeholders for SQL IN clause (?,?,?)
+$placeholders = implode(',', array_fill(0, count($review_ids), '?'));
+
 $rev_sql = "SELECT r.*, c.CUSTOMER_NAME 
             FROM REVIEW r 
             JOIN CUSTOMER c ON r.CUSTOMER_ID = c.CUSTOMER_ID 
-            WHERE r.ITEM_ID = ? AND r.REVIEW_ACTIVE = 1 
+            WHERE r.ITEM_ID IN ($placeholders) AND r.REVIEW_ACTIVE = 1 
             ORDER BY r.REVIEW_DATE DESC";
-$r_stmt = $pdo->prepare($rev_sql);
-$r_stmt->execute([$item_id]);
-$reviews = $r_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$r_stmt = $pdo->prepare($rev_sql);
+$r_stmt->execute($review_ids);
+$reviews = $r_stmt->fetchAll(PDO::FETCH_ASSOC);
 // 6. FETCH "MORE FROM DESIGNER"
-$more_sql = "SELECT ITEM_ID, ITEM_NAME, ITEM_PRICE, ITEM_IMAGE 
-             FROM ITEM 
-             WHERE DESIGNER_ID = ? AND ITEM_ID != ? AND ITEM_ACTIVE = 1 
+$more_sql = "SELECT ITEM_ID, ITEM_NAME, ITEM_PRICE, ITEM_IMAGE
+             FROM ITEM
+             WHERE DESIGNER_ID = ? AND ITEM_ID != ? AND ITEM_ACTIVE = 1
              LIMIT 4";
 $m_stmt = $pdo->prepare($more_sql);
 $m_stmt->execute([$product['DESIGNER_ID'], $item_id]);
 $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// 7. FETCH LINKED CHARMS (Checks both Item ID and Parent ID)
+$charms = [];
+
+// Create a list of IDs to check: The current Item's ID AND its Parent ID (if it exists)
+$ids_to_check = [$product['ITEM_ID']];
+if (!empty($product['PARENT_ID'])) {
+    $ids_to_check[] = $product['PARENT_ID'];
+}
+
+// Create placeholders for the SQL query (e.g., "?,?")
+$placeholders = implode(',', array_fill(0, count($ids_to_check), '?'));
+
+$charm_sql = "SELECT DISTINCT c.* FROM CHARM c
+              JOIN ITEMCHARM ic ON c.CHARM_ID = ic.CHARM_ID
+              WHERE ic.ITEM_ID IN ($placeholders) 
+              AND c.CHARM_ACTIVE = 1
+              ORDER BY c.CHARM_TYPE, c.CHARM_NAME";
+
+$c_stmt = $pdo->prepare($charm_sql);
+$c_stmt->execute($ids_to_check);
+$charms = $c_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Show section only if charms were found
+$is_charm_compatible = !empty($charms);
+
+// 8. CHECK IF USER CAN REVIEW (Logged in + Has purchased item)
+$can_review = false;
+$has_already_reviewed = false;
+$customer_id = null;
+
+if (isset($_SESSION['user_id'])) {
+    $customer_id = $_SESSION['user_id'];
+
+    // Check if customer has purchased this item (or any variant in the group)
+    $purchase_check_ids = $review_ids; // Reuse the same IDs from reviews section
+    $purchase_placeholders = implode(',', array_fill(0, count($purchase_check_ids), '?'));
+
+    $purchase_sql = "SELECT COUNT(*) FROM `ORDER` o
+                     JOIN CART c ON o.CART_ID = c.CART_ID
+                     JOIN CARTITEM ci ON c.CART_ID = ci.CART_ID
+                     WHERE o.CUSTOMER_ID = ?
+                     AND o.ORDER_STATUS IN ('completed', 'delivered')
+                     AND ci.ITEM_ID IN ($purchase_placeholders)";
+
+    $p_stmt = $pdo->prepare($purchase_sql);
+    $p_stmt->execute(array_merge([$customer_id], $purchase_check_ids));
+    $has_purchased = $p_stmt->fetchColumn() > 0;
+
+    // Check if customer has already reviewed this item (or any variant)
+    $review_check_sql = "SELECT COUNT(*) FROM REVIEW
+                         WHERE CUSTOMER_ID = ? AND ITEM_ID IN ($purchase_placeholders)";
+    $r_check_stmt = $pdo->prepare($review_check_sql);
+    $r_check_stmt->execute(array_merge([$customer_id], $purchase_check_ids));
+    $has_already_reviewed = $r_check_stmt->fetchColumn() > 0;
+
+    // User can review if they purchased and haven't reviewed yet
+    $can_review = $has_purchased && !$has_already_reviewed;
+}
+
+// Handle review submission
+$review_message = '';
+$review_error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    if (!$customer_id) {
+        $review_error = 'You must be logged in to submit a review.';
+    } elseif (!$can_review) {
+        $review_error = 'You can only review items you have purchased.';
+    } else {
+        $rating = intval($_POST['rating'] ?? 0);
+        $review_text = trim($_POST['review_text'] ?? '');
+
+        if ($rating < 1 || $rating > 5) {
+            $review_error = 'Please select a rating between 1 and 5 stars.';
+        } elseif (empty($review_text)) {
+            $review_error = 'Please write a review.';
+        } elseif (strlen($review_text) > 500) {
+            $review_error = 'Review must be 500 characters or less.';
+        } else {
+            // Insert the review
+            $insert_sql = "INSERT INTO REVIEW (CUSTOMER_ID, ITEM_ID, REVIEW_RATING, REVIEW_TEXT)
+                           VALUES (?, ?, ?, ?)";
+            $insert_stmt = $pdo->prepare($insert_sql);
+
+            if ($insert_stmt->execute([$customer_id, $item_id, $rating, $review_text])) {
+                $review_message = 'Thank you for your review!';
+                $has_already_reviewed = true;
+                $can_review = false;
+
+                // Refresh reviews list
+                $r_stmt->execute($review_ids);
+                $reviews = $r_stmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                $review_error = 'Failed to submit review. Please try again.';
+            }
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -507,7 +620,7 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
         /* REVIEWS */
         .reviews-section {
             padding: 40px 60px;
-            max-width: 900px;
+            max-width: 100%;
         }
 
         .review-card {
@@ -566,6 +679,321 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
             margin-top: 40px;
             font-size: 12px;
             color: #777;
+        }
+
+        /* CHARMS SECTION */
+        .charms-section {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .charms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .charms-header h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .charms-total {
+            font-size: 13px;
+            color: #0b2239;
+            font-weight: 500;
+        }
+
+        .charms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .charm-item {
+            position: relative;
+            text-align: center;
+            cursor: pointer;
+            padding: 8px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+
+        .charm-item:hover {
+            border-color: #7fb3c8;
+            background: #fff;
+        }
+
+        .charm-item.selected {
+            border-color: #0b2239;
+            background: #f0f7fa;
+        }
+
+        .charm-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .charm-name {
+            font-size: 10px;
+            color: #333;
+            line-height: 1.2;
+            margin-bottom: 3px;
+        }
+
+        .charm-price {
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .charm-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #0b2239;
+            color: #fff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .selected-charms-list {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .selected-charms-list h5 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .selected-charm-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e8f4f8;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            margin: 3px;
+        }
+
+        .selected-charm-tag .remove-charm {
+            cursor: pointer;
+            color: #999;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .selected-charm-tag .remove-charm:hover {
+            color: #c00;
+        }
+
+        .price-breakdown {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .price-row.total {
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* REVIEW FORM STYLES */
+        .review-form-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .review-form-container h4 {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #0b2239;
+        }
+
+        .review-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .review-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        /* Star Rating Input */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            cursor: pointer;
+            font-size: 24px;
+            color: #ddd;
+            transition: color 0.2s;
+            margin-bottom: 0;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover~label,
+        .star-rating input:checked~label {
+            color: #f4c150;
+        }
+
+        .review-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .review-form textarea:focus {
+            outline: none;
+            border-color: #7fb3c8;
+        }
+
+        .char-count {
+            display: block;
+            text-align: right;
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .btn-submit-review {
+            background: #0b2239;
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 13px;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit-review:hover {
+            background: #7fb3c8;
+        }
+
+        /* Review Notice */
+        .review-notice {
+            background: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .review-notice i {
+            font-size: 24px;
+            color: #999;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .review-notice p {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+
+        .review-notice a {
+            color: #0b2239;
+            font-weight: 500;
+            text-decoration: underline;
+        }
+
+        .review-notice a:hover {
+            color: #7fb3c8;
+        }
+
+        .review-notice-info {
+            background: #e8f4f8;
+            border-color: #c5e3ed;
+        }
+
+        .review-notice-info i {
+            color: #0b2239;
+        }
+
+        /* Review Alerts */
+        .review-alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .review-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .review-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         @media(max-width: 900px) {
@@ -661,6 +1089,53 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 <?php endif; ?>
 
+                <?php if ($is_charm_compatible && !empty($charms)): ?>
+                    <div class="charms-section">
+                        <div class="charms-header">
+                            <h4><i class="fa-solid fa-gem"></i> Add Charms to Your Bracelet</h4>
+                            <span class="charms-total">Selected: <span id="charmCount">0</span></span>
+                        </div>
+
+                        <div class="charms-grid">
+                            <?php foreach ($charms as $charm):
+                                $charmImg = !empty($charm['CHARM_IMAGE']) ? $charm['CHARM_IMAGE'] : 'assets/images/placeholder.png';
+                            ?>
+                                <div class="charm-item" data-charm-id="<?= $charm['CHARM_ID'] ?>"
+                                    data-charm-name="<?= htmlspecialchars($charm['CHARM_NAME']) ?>"
+                                    data-charm-price="<?= $charm['CHARM_PRICE'] ?>" onclick="toggleCharm(this)">
+                                    <img src="<?= htmlspecialchars($charmImg) ?>"
+                                        alt="<?= htmlspecialchars($charm['CHARM_NAME']) ?>">
+                                    <div class="charm-name"><?= htmlspecialchars($charm['CHARM_NAME']) ?></div>
+                                    <div class="charm-price">+RM <?= number_format($charm['CHARM_PRICE'], 2) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="selected-charms-list" id="selectedCharmsList" style="display: none;">
+                            <h5>Your Selected Charms:</h5>
+                            <div id="selectedCharmsContainer"></div>
+                        </div>
+
+                        <div class="price-breakdown" id="priceBreakdown">
+                            <div class="price-row">
+                                <span>Bracelet</span>
+                                <span>RM <?= number_format($product['ITEM_PRICE'], 2) ?></span>
+                            </div>
+                            <div class="price-row" id="charmsRow" style="display: none;">
+                                <span>Charms (<span id="charmQty">0</span>)</span>
+                                <span>RM <span id="charmsPrice">0.00</span></span>
+                            </div>
+                            <div class="price-row total">
+                                <span>Total</span>
+                                <span>RM <span id="totalPrice"><?= number_format($product['ITEM_PRICE'], 2) ?></span></span>
+                            </div>
+                        </div>
+
+                        <!-- Hidden inputs for selected charms -->
+                        <div id="charmInputs"></div>
+                    </div>
+                <?php endif; ?>
+
                 <div class="action-row">
                     <div class="qty-selector">
                         <button type="button" class="qty-btn" id="qtyMinus">−</button>
@@ -710,8 +1185,67 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="reviews-section">
         <h3 class="section-header">Reviews (<?= count($reviews) ?>)</h3>
 
+        <!-- Review Form Section -->
+        <?php if ($review_message): ?>
+            <div class="review-alert review-success">
+                <i class="fa-solid fa-check-circle"></i> <?= htmlspecialchars($review_message) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($review_error): ?>
+            <div class="review-alert review-error">
+                <i class="fa-solid fa-exclamation-circle"></i> <?= htmlspecialchars($review_error) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($can_review): ?>
+            <!-- User can write a review -->
+            <div class="review-form-container">
+                <h4>Write a Review</h4>
+                <form method="POST" class="review-form">
+                    <div class="form-group">
+                        <label>Your Rating</label>
+                        <div class="star-rating">
+                            <?php for ($i = 5; $i >= 1; $i--): ?>
+                                <input type="radio" name="rating" value="<?= $i ?>" id="star<?= $i ?>" required>
+                                <label for="star<?= $i ?>"><i class="fa-solid fa-star"></i></label>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="review_text">Your Review</label>
+                        <textarea name="review_text" id="review_text" rows="4"
+                            placeholder="Share your experience with this product..." maxlength="500" required></textarea>
+                        <small class="char-count"><span id="charCount">0</span>/500 characters</small>
+                    </div>
+                    <button type="submit" name="submit_review" class="btn-submit-review">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Review
+                    </button>
+                </form>
+            </div>
+        <?php elseif (!isset($_SESSION['user_id'])): ?>
+            <!-- User not logged in -->
+            <div class="review-notice">
+                <i class="fa-solid fa-lock"></i>
+                <p>Please <a href="login.php">log in</a> to write a review.</p>
+            </div>
+        <?php elseif ($has_already_reviewed): ?>
+            <!-- User already reviewed -->
+            <div class="review-notice review-notice-info">
+                <i class="fa-solid fa-check-circle"></i>
+                <p>You have already reviewed this product. Thank you!</p>
+            </div>
+        <?php else: ?>
+            <!-- User logged in but hasn't purchased -->
+            <div class="review-notice">
+                <i class="fa-solid fa-shopping-bag"></i>
+                <p>Only customers who have purchased this item can write a review.</p>
+            </div>
+        <?php endif; ?>
+
+        <!-- Existing Reviews -->
         <?php if (empty($reviews)): ?>
-            <p style="font-size: 13px; color: #777;">No reviews yet. Be the first to review!</p>
+            <p style="font-size: 13px; color: #777; margin-top: 20px;">No reviews yet. Be the first to review!</p>
         <?php else: ?>
             <?php foreach ($reviews as $rev): ?>
                 <div class="review-card">
@@ -734,6 +1268,94 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- JAVASCRIPT MUST COME BEFORE FOOTER -->
     <script>
+        // ===== CHARM SELECTION FUNCTIONALITY =====
+        const basePrice = <?= $product['ITEM_PRICE'] ?>;
+        let selectedCharms = [];
+
+        function toggleCharm(element) {
+            const charmId = element.dataset.charmId;
+            const charmName = element.dataset.charmName;
+            const charmPrice = parseFloat(element.dataset.charmPrice);
+
+            const existingIndex = selectedCharms.findIndex(c => c.id === charmId);
+
+            if (existingIndex > -1) {
+                // Remove charm
+                selectedCharms.splice(existingIndex, 1);
+                element.classList.remove('selected');
+            } else {
+                // Add charm
+                selectedCharms.push({
+                    id: charmId,
+                    name: charmName,
+                    price: charmPrice
+                });
+                element.classList.add('selected');
+            }
+
+            updateCharmUI();
+        }
+
+        function removeCharm(charmId) {
+            const index = selectedCharms.findIndex(c => c.id === charmId);
+            if (index > -1) {
+                selectedCharms.splice(index, 1);
+                // Remove selected class from grid item
+                const gridItem = document.querySelector(`.charm-item[data-charm-id="${charmId}"]`);
+                if (gridItem) gridItem.classList.remove('selected');
+                updateCharmUI();
+            }
+        }
+
+        function updateCharmUI() {
+            const charmCount = document.getElementById('charmCount');
+            const charmQty = document.getElementById('charmQty');
+            const charmsPrice = document.getElementById('charmsPrice');
+            const totalPrice = document.getElementById('totalPrice');
+            const charmsRow = document.getElementById('charmsRow');
+            const selectedCharmsList = document.getElementById('selectedCharmsList');
+            const selectedCharmsContainer = document.getElementById('selectedCharmsContainer');
+            const charmInputs = document.getElementById('charmInputs');
+
+            // Calculate totals
+            const totalCharmPrice = selectedCharms.reduce((sum, c) => sum + c.price, 0);
+            const grandTotal = basePrice + totalCharmPrice;
+
+            // Update counts and prices
+            if (charmCount) charmCount.textContent = selectedCharms.length;
+            if (charmQty) charmQty.textContent = selectedCharms.length;
+            if (charmsPrice) charmsPrice.textContent = totalCharmPrice.toFixed(2);
+            if (totalPrice) totalPrice.textContent = grandTotal.toFixed(2);
+
+            // Show/hide charms row
+            if (charmsRow) {
+                charmsRow.style.display = selectedCharms.length > 0 ? 'flex' : 'none';
+            }
+
+            // Update selected charms list
+            if (selectedCharmsList && selectedCharmsContainer) {
+                if (selectedCharms.length > 0) {
+                    selectedCharmsList.style.display = 'block';
+                    selectedCharmsContainer.innerHTML = selectedCharms.map(c =>
+                        `<span class="selected-charm-tag">
+                            ${c.name} (RM ${c.price.toFixed(2)})
+                            <span class="remove-charm" onclick="removeCharm('${c.id}')">&times;</span>
+                        </span>`
+                    ).join('');
+                } else {
+                    selectedCharmsList.style.display = 'none';
+                    selectedCharmsContainer.innerHTML = '';
+                }
+            }
+
+            // Update hidden form inputs
+            if (charmInputs) {
+                charmInputs.innerHTML = selectedCharms.map(c =>
+                    `<input type="hidden" name="charms[]" value="${c.id}">`
+                ).join('');
+            }
+        }
+
         console.log('🚀 TINK Product Detail Script Loading...');
 
         // Wait for DOM to be fully loaded
@@ -845,6 +1467,16 @@ $related_items = $m_stmt->fetchAll(PDO::FETCH_ASSOC);
                         engraveInput.style.display = 'none';
                         engraveInput.value = '';
                     }
+                });
+            }
+
+            // ===== REVIEW FORM CHARACTER COUNTER =====
+            const reviewTextarea = document.getElementById('review_text');
+            const charCount = document.getElementById('charCount');
+
+            if (reviewTextarea && charCount) {
+                reviewTextarea.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
                 });
             }
 

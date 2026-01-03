@@ -2,8 +2,13 @@
 session_start();
 require_once 'config.php';
 
-// --- 1. INITIALIZE & DETERMINE MODE (Search vs Category) ---
-$sql = "SELECT * FROM ITEM WHERE ITEM_ACTIVE = 1";
+// --- 1. INITIALIZE & DETERMINE MODE ---
+// FIX: Added LEFT JOIN to fetch the actual DESIGNER_NAME
+$sql = "SELECT ITEM.*, DESIGNER.DESIGNER_NAME 
+        FROM ITEM 
+        LEFT JOIN DESIGNER ON ITEM.DESIGNER_ID = DESIGNER.DESIGNER_ID 
+        WHERE ITEM_ACTIVE = 1";
+
 $params = [];
 $title_text = "Catalog";
 
@@ -15,7 +20,7 @@ if (!empty($_GET['search'])) {
     $params[] = "%$search%";
     $params[] = "%$search%";
     $title_text = "Search: \"" . htmlspecialchars($search) . "\"";
-    $category = 'Search'; // Fallback for links
+    $category = 'Search';
 } else {
     // CATEGORY MODE
     $category = isset($_GET['cat']) ? $_GET['cat'] : 'Necklaces';
@@ -36,7 +41,7 @@ foreach ($filter_keys as $key) {
         $sub_clauses = [];
         foreach ($_GET[$key] as $val) {
             // Checks Tags, Material column, or Designer Name
-            $sub_clauses[] = "(ITEM_TAGS LIKE ? OR ITEM_MATERIAL LIKE ? OR DESIGNER_ID IN (SELECT DESIGNER_ID FROM DESIGNER WHERE DESIGNER_NAME = ?))";
+            $sub_clauses[] = "(ITEM_TAGS LIKE ? OR ITEM_MATERIAL LIKE ? OR DESIGNER.DESIGNER_NAME = ?)";
             $params[] = "%$val%";
             $params[] = "%$val%";
             $params[] = $val;
@@ -49,6 +54,12 @@ foreach ($filter_keys as $key) {
     }
 }
 
+// --- NEW: PERSONALIZE FILTER ---
+// This checks the IS_ENGRAVABLE column in your database
+if (isset($_GET['personalize'])) {
+    $sql .= " AND ITEM.IS_ENGRAVABLE = 1";
+}
+
 // --- 3. APPLY SORTING ---
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'best-selling';
 switch ($sort) {
@@ -59,7 +70,7 @@ switch ($sort) {
         $sql .= " ORDER BY ITEM_PRICE DESC";
         break;
     case 'newest':
-        $sql .= " ORDER BY ITEM_DATE DESC"; // Assuming you have ITEM_DATE or ITEM_ID
+        $sql .= " ORDER BY ITEM_ID DESC";
         break;
     default: // best-selling
         $sql .= " ORDER BY ITEM_ID DESC";
@@ -89,8 +100,8 @@ function getRemoveUrl($key, $value)
         $index = array_search($value, $params[$key]);
         if ($index !== false) unset($params[$key][$index]);
     }
-    // Handle clearing search
     if ($key === 'search') unset($params['search']);
+    if ($key === 'personalize') unset($params['personalize']);
     return '?' . http_build_query($params);
 }
 
@@ -127,6 +138,45 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/catalog.css">
 
+    <script>
+    // Define functions early so they're available for inline event handlers
+    function toggleFilter(element) {
+        element.parentElement.classList.toggle('active');
+    }
+
+    function updateCard(el, id) {
+        const img = document.getElementById('img-' + id);
+        const price = document.getElementById('price-' + id);
+        const title = document.getElementById('title-' + id);
+
+        // Update active swatch state
+        const swatches = el.parentElement.querySelectorAll('.swatch');
+        swatches.forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+
+        if (img && el.dataset.image) img.src = el.dataset.image;
+        if (price && el.dataset.price) price.innerText = el.dataset.price;
+        if (title && el.dataset.name) title.innerText = el.dataset.name;
+    }
+
+    // Sort dropdown handler
+    function handleSort(value) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('sort', value);
+        window.location.search = urlParams.toString();
+    }
+
+    // Personalize checkbox handler
+    function handlePersonalize(checked) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (checked) {
+            urlParams.set('personalize', '1');
+        } else {
+            urlParams.delete('personalize');
+        }
+        window.location.search = urlParams.toString();
+    }
+    </script>
 </head>
 
 <body>
@@ -139,22 +189,17 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
 
     <div class="catalog-controls">
         <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
-            <input type="checkbox"> Personalize
+            <input type="checkbox" id="personalizeFilter" onchange="handlePersonalize(this.checked)"
+                <?php echo isset($_GET['personalize']) ? 'checked' : ''; ?>>
+            Personalize
         </label>
 
-        <div class="custom-dropdown" id="sortDropdown">
-            <div class="dropdown-selected"><?= $current_sort_label ?></div>
-            <div class="dropdown-options">
-                <div class="dropdown-option <?= $sort == 'best-selling' ? 'selected' : '' ?>" data-value="best-selling">
-                    Sort By: Best Selling</div>
-                <div class="dropdown-option <?= $sort == 'price-low' ? 'selected' : '' ?>" data-value="price-low">Price:
-                    Low to High</div>
-                <div class="dropdown-option <?= $sort == 'price-high' ? 'selected' : '' ?>" data-value="price-high">
-                    Price: High to Low</div>
-                <div class="dropdown-option <?= $sort == 'newest' ? 'selected' : '' ?>" data-value="newest">Newest First
-                </div>
-            </div>
-        </div>
+        <select id="sortDropdown" class="sort-select" onchange="handleSort(this.value)">
+            <option value="best-selling" <?= $sort == 'best-selling' ? 'selected' : '' ?>>Sort By: Best Selling</option>
+            <option value="price-low" <?= $sort == 'price-low' ? 'selected' : '' ?>>Price: Low to High</option>
+            <option value="price-high" <?= $sort == 'price-high' ? 'selected' : '' ?>>Price: High to Low</option>
+            <option value="newest" <?= $sort == 'newest' ? 'selected' : '' ?>>Newest First</option>
+        </select>
     </div>
 
     <div class="catalog-layout">
@@ -164,30 +209,34 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
             <form id="filterForm" method="GET" action="catalog.php">
 
                 <?php if (!empty($_GET['search'])): ?>
-                    <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
+                <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
                 <?php else: ?>
-                    <input type="hidden" name="cat" value="<?= htmlspecialchars($category) ?>">
+                <input type="hidden" name="cat" value="<?= htmlspecialchars($category) ?>">
+                <?php endif; ?>
+
+                <?php if (isset($_GET['personalize'])): ?>
+                <input type="hidden" name="personalize" value="1">
                 <?php endif; ?>
 
                 <?php foreach ($sidebar_filters as $title => $opts):
                     $key = strtolower($title);
                     $isOpen = (isset($_GET[$key]) && !empty($_GET[$key])) ? 'active' : '';
                 ?>
-                    <div class="filter-group <?= $isOpen ?>">
-                        <div class="filter-title" onclick="toggleFilter(this)">
-                            <?= $title ?> <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <div class="filter-options">
-                            <?php foreach ($opts as $opt):
+                <div class="filter-group <?= $isOpen ?>">
+                    <div class="filter-title" onclick="toggleFilter(this)">
+                        <?= $title ?> <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="filter-options">
+                        <?php foreach ($opts as $opt):
                                 $isChecked = (isset($_GET[$key]) && in_array($opt, $_GET[$key])) ? 'checked' : '';
                             ?>
-                                <label>
-                                    <input type="checkbox" name="<?= $key ?>[]" value="<?= $opt ?>" <?= $isChecked ?>>
-                                    <?= $opt ?>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
+                        <label>
+                            <input type="checkbox" name="<?= $key ?>[]" value="<?= $opt ?>" <?= $isChecked ?>>
+                            <?= $opt ?>
+                        </label>
+                        <?php endforeach; ?>
                     </div>
+                </div>
                 <?php endforeach; ?>
 
                 <button type="submit" class="btn-apply">Apply Filters</button>
@@ -196,126 +245,97 @@ $current_sort_label = isset($sort_labels[$sort]) ? $sort_labels[$sort] : $sort_l
 
         <div style="width: 100%;">
 
-            <?php if (!empty($active_filters) || !empty($_GET['search'])): ?>
-                <div class="active-filters">
-                    <?php if (!empty($_GET['search'])): ?>
-                        <a href="<?= getRemoveUrl('search', $_GET['search']) ?>" class="filter-chip">
-                            Search: <?= htmlspecialchars($_GET['search']) ?> <i class="fa-solid fa-xmark"></i>
-                        </a>
-                    <?php endif; ?>
+            <?php if (!empty($active_filters) || !empty($_GET['search']) || isset($_GET['personalize'])): ?>
+            <div class="active-filters">
+                <?php if (!empty($_GET['search'])): ?>
+                <a href="<?= getRemoveUrl('search', $_GET['search']) ?>" class="filter-chip">
+                    Search: <?= htmlspecialchars($_GET['search']) ?> <i class="fa-solid fa-xmark"></i>
+                </a>
+                <?php endif; ?>
 
-                    <?php foreach ($active_filters as $filter): ?>
-                        <a href="<?= getRemoveUrl($filter['key'], $filter['value']) ?>" class="filter-chip">
-                            <?= htmlspecialchars($filter['value']) ?> <i class="fa-solid fa-xmark"></i>
-                        </a>
-                    <?php endforeach; ?>
+                <?php if (isset($_GET['personalize'])): ?>
+                <a href="<?= getRemoveUrl('personalize', '1') ?>" class="filter-chip">
+                    Personalizable <i class="fa-solid fa-xmark"></i>
+                </a>
+                <?php endif; ?>
 
-                    <a href="catalog.php?cat=<?= htmlspecialchars($category) ?>" class="clear-all">Clear All</a>
-                </div>
+                <?php foreach ($active_filters as $filter): ?>
+                <a href="<?= getRemoveUrl($filter['key'], $filter['value']) ?>" class="filter-chip">
+                    <?= htmlspecialchars($filter['value']) ?> <i class="fa-solid fa-xmark"></i>
+                </a>
+                <?php endforeach; ?>
+
+                <a href="catalog.php?cat=<?= htmlspecialchars($category) ?>" class="clear-all">Clear All</a>
+            </div>
             <?php endif; ?>
 
             <main class="product-grid">
                 <?php if (empty($grouped_products)): ?>
-                    <div style="grid-column:1/-1; text-align:center; padding:60px; color:#888;">
-                        <i class="fa-regular fa-folder-open" style="font-size:2.5rem; margin-bottom:15px;"></i>
-                        <p>No products found matching your selection.</p>
-                    </div>
+                <div style="grid-column:1/-1; text-align:center; padding:60px; color:#888;">
+                    <i class="fa-regular fa-folder-open" style="font-size:2.5rem; margin-bottom:15px;"></i>
+                    <p>No products found matching your selection.</p>
+                </div>
                 <?php else: ?>
-                    <?php foreach ($grouped_products as $group):
+                <?php foreach ($grouped_products as $group):
                         $base = $group['base'];
                         $variants = $group['variants'];
+
+                        // Image Fix
+                        $imgUrl = !empty($base['ITEM_IMAGE']) ? ltrim($base['ITEM_IMAGE'], '/') : '';
                     ?>
-                        <div class="product-card">
-                            <div class="image-wrapper">
-                                <a href="product_detail.php?id=<?= $base['ITEM_ID'] ?>">
-                                    <img src="<?= htmlspecialchars($base['ITEM_IMAGE']) ?>" id="img-<?= $base['ITEM_ID'] ?>"
-                                        alt="<?= htmlspecialchars($base['ITEM_NAME']) ?>">
-                                </a>
+                <div class="product-card">
+                    <div class="image-wrapper">
+                        <a href="product_detail.php?id=<?= $base['ITEM_ID'] ?>">
+                            <img src="<?= htmlspecialchars($imgUrl) ?>" id="img-<?= $base['ITEM_ID'] ?>"
+                                alt="<?= htmlspecialchars($base['ITEM_NAME']) ?>">
+                        </a>
 
-                                <?php if (count($variants) > 1): ?>
-                                    <div class="swatches">
-                                        <?php foreach ($variants as $v):
+                        <?php if (count($variants) > 1): ?>
+                        <div class="swatches">
+                            <?php foreach ($variants as $v):
                                             $mat = strtolower($v['ITEM_MATERIAL']);
+                                            // Determine swatch color - check rose gold first (before gold)
                                             $cls = 'silver';
-                                            if (strpos($mat, 'gold') !== false) $cls = 'gold';
-                                            if (strpos($mat, 'rose') !== false) $cls = 'rose';
+                                            if (strpos($mat, 'rose') !== false) {
+                                                $cls = 'rose';
+                                            } elseif (strpos($mat, 'gold') !== false && strpos($mat, 'sterling') === false) {
+                                                $cls = 'gold';
+                                            } elseif (strpos($mat, 'gold plated') !== false || strpos($mat, '14k gold') !== false || strpos($mat, '18k gold') !== false) {
+                                                $cls = 'gold';
+                                            }
+
+                                            // Variant Image Fix
+                                            $vImgUrl = !empty($v['ITEM_IMAGE']) ? ltrim($v['ITEM_IMAGE'], '/') : '';
                                         ?>
-                                            <span class="swatch <?= $cls ?>" onmouseover="updateCard(this, '<?= $base['ITEM_ID'] ?>')"
-                                                data-image="<?= htmlspecialchars($v['ITEM_IMAGE']) ?>"
-                                                data-price="RM <?= number_format($v['ITEM_PRICE'], 2) ?>"
-                                                data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>">
-                                            </span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
-                                <?= htmlspecialchars($base['ITEM_NAME']) ?>
-                            </div>
-
-                            <div class="designer">
-                                DESIGNED BY: <?= htmlspecialchars($base['DESIGNER_NAME'] ?? 'TINK Studio') ?>
-                            </div>
-
-                            <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
-                                RM <?= number_format($base['ITEM_PRICE'], 2) ?>
-                            </div>
+                            <span class="swatch <?= $cls ?>" onmouseover="updateCard(this, '<?= $base['ITEM_ID'] ?>')"
+                                data-image="<?= htmlspecialchars($vImgUrl) ?>"
+                                data-price="RM <?= number_format($v['ITEM_PRICE'], 2) ?>"
+                                data-name="<?= htmlspecialchars($v['ITEM_NAME']) ?>" data-id="<?= $v['ITEM_ID'] ?>">
+                            </span>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="product-name" id="title-<?= $base['ITEM_ID'] ?>">
+                        <?= htmlspecialchars($base['ITEM_NAME']) ?>
+                    </div>
+
+                    <div class="designer">
+                        DESIGNED BY: <?= htmlspecialchars($base['DESIGNER_NAME'] ?? 'TINK Studio') ?>
+                    </div>
+
+                    <div class="price" id="price-<?= $base['ITEM_ID'] ?>">
+                        RM <?= number_format($base['ITEM_PRICE'], 2) ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
                 <?php endif; ?>
             </main>
         </div>
     </div>
 
     <?php include 'components/footer.php'; ?>
-
-    <script>
-        // 1. Sidebar Toggle
-        function toggleFilter(element) {
-            element.parentElement.classList.toggle('active');
-        }
-
-        // 2. Swatch Update
-        function updateCard(el, id) {
-            const img = document.getElementById('img-' + id);
-            const price = document.getElementById('price-' + id);
-            const title = document.getElementById('title-' + id);
-
-            if (img && el.dataset.image) img.src = el.dataset.image;
-            if (price && el.dataset.price) price.innerText = el.dataset.price;
-            if (title && el.dataset.name) title.innerText = el.dataset.name;
-        }
-
-        // 3. Custom Sorting Dropdown Logic
-        const dropdown = document.getElementById('sortDropdown');
-        const dropdownSelected = dropdown.querySelector('.dropdown-selected');
-        const dropdownOptions = dropdown.querySelectorAll('.dropdown-option');
-
-        // Toggle visibility
-        dropdownSelected.addEventListener('click', () => dropdown.classList.toggle('open'));
-
-        // Handle Selection & Reload Page
-        dropdownOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                const value = this.getAttribute('data-value');
-
-                // Get current URL params
-                const urlParams = new URLSearchParams(window.location.search);
-
-                // Update 'sort' param
-                urlParams.set('sort', value);
-
-                // Reload page with new params
-                window.location.search = urlParams.toString();
-            });
-        });
-
-        // Close dropdown if clicked outside
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
-        });
-    </script>
 
 </body>
 

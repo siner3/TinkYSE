@@ -26,17 +26,17 @@ $dummyImage = "https://placehold.co/400x400/F5F5F5/CCCCCC?text=No+Image";
 
 
     <style>
-        .designers-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 40px 100px;
-        }
+    .designers-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px 100px;
+    }
 
-        .designers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 40px;
-        }
+    .designers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 40px;
+    }
     </style>
 </head>
 
@@ -52,7 +52,7 @@ $dummyImage = "https://placehold.co/400x400/F5F5F5/CCCCCC?text=No+Image";
         <div class="designers-grid">
 
             <?php if (count($designers) > 0): ?>
-                <?php foreach ($designers as $designer):
+            <?php foreach ($designers as $designer):
                     // 2. FETCH TOP 4 ITEM IMAGES
                     $imgSql = "SELECT ITEM_IMAGE FROM ITEM WHERE DESIGNER_ID = ? AND ITEM_ACTIVE = 1 LIMIT 4";
                     $imgStmt = $pdo->prepare($imgSql);
@@ -87,26 +87,26 @@ $dummyImage = "https://placehold.co/400x400/F5F5F5/CCCCCC?text=No+Image";
 
                     $layoutClass = "layout-" . $count; // e.g., 'layout-2'
                 ?>
-                    <a href="designers-selected.php?id=<?= $designer['DESIGNER_ID'] ?>" class="designer-card">
+            <a href="designers-selected.php?id=<?= $designer['DESIGNER_ID'] ?>" class="designer-card">
 
-                        <div class="designer-preview <?= $layoutClass ?>">
-                            <?php foreach ($previewImages as $imgSrc): ?>
-                                <img src="<?= htmlspecialchars($imgSrc) ?>" alt="Item Preview">
-                            <?php endforeach; ?>
-                        </div>
+                <div class="designer-preview <?= $layoutClass ?>">
+                    <?php foreach ($previewImages as $imgSrc): ?>
+                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="Item Preview">
+                    <?php endforeach; ?>
+                </div>
 
-                        <div class="designer-info">
-                            <div class="designer-name">
-                                <?= htmlspecialchars($designer['DESIGNER_NAME']) ?>
-                            </div>
-                            <div class="item-count">
-                                <?= $totalItems ?> Creations
-                            </div>
-                        </div>
-                    </a>
-                <?php endforeach; ?>
+                <div class="designer-info">
+                    <div class="designer-name">
+                        <?= htmlspecialchars($designer['DESIGNER_NAME']) ?>
+                    </div>
+                    <div class="item-count">
+                        <?= $totalItems ?> Creations
+                    </div>
+                </div>
+            </a>
+            <?php endforeach; ?>
             <?php else: ?>
-                <div style="grid-column: 1/-1; text-align: center; color: #888;">No designers found.</div>
+            <div style="grid-column: 1/-1; text-align: center; color: #888;">No designers found.</div>
             <?php endif; ?>
 
         </div>

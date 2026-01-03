@@ -86,9 +86,27 @@ if ($cart) {
     $stmt->execute([$cart_id]);
     $cart_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($cart_items as $item) {
-        $subtotal += ($item['CARTITEM_PRICE'] * $item['CARTITEM_QUANTITY']);
+    // Fetch charms for each cart item
+    foreach ($cart_items as &$item) {
+        $charm_sql = "SELECT c.CHARM_ID, c.CHARM_NAME, c.CHARM_PRICE, c.CHARM_IMAGE
+                      FROM CARTITEM_CHARM cc
+                      JOIN CHARM c ON cc.CHARM_ID = c.CHARM_ID
+                      WHERE cc.CARTITEM_ID = ?";
+        $charm_stmt = $pdo->prepare($charm_sql);
+        $charm_stmt->execute([$item['CARTITEM_ID']]);
+        $item['charms'] = $charm_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Calculate charms total for this item
+        $charms_total = 0;
+        foreach ($item['charms'] as $charm) {
+            $charms_total += $charm['CHARM_PRICE'];
+        }
+        $item['charms_total'] = $charms_total;
+
+        // Add to subtotal: item price + charms price (multiplied by quantity)
+        $subtotal += (($item['CARTITEM_PRICE'] + $charms_total) * $item['CARTITEM_QUANTITY']);
     }
+    unset($item); // Break the reference
 }
 
 $shipping_method = isset($_SESSION['selected_shipping']) ? $_SESSION['selected_shipping'] : 'standard';
@@ -242,7 +260,80 @@ $total = $subtotal + $shipping_cost;
             max-width: 150px;
             text-align: right;
         }
+
+        /* Charms in Cart */
+        .item-charms {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f5f0;
+            border-radius: 6px;
+            border: 1px solid #e8e4dc;
+        }
+
+        .charms-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .charms-label i {
+            color: #d4af37;
+        }
+
+        .charms-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .charm-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            color: #333;
+        }
+
+        .charm-tag small {
+            color: #888;
+            font-size: 0.65rem;
+        }
+
+        .charms-subtotal {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 500;
+            text-align: right;
+            margin: 0;
+            padding-top: 5px;
+            border-top: 1px dashed #ddd;
+        }
     </style>
+
+    <script>
+        // Define function early so it's available for inline onclick handlers
+        function toggleAddressForm() {
+            var form = document.getElementById('addressForm');
+            var display = document.getElementById('displayAddress');
+
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                display.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                display.style.display = 'block';
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -348,6 +439,22 @@ $total = $subtotal + $shipping_cost;
                                         "<?= htmlspecialchars($item['CARTITEM_ENGRAVING']) ?>"</p>
                                 <?php endif; ?>
 
+                                <?php if (!empty($item['charms'])): ?>
+                                    <div class="item-charms">
+                                        <p class="charms-label"><i class='bx bxs-diamond'></i> Charms Added:</p>
+                                        <div class="charms-list">
+                                            <?php foreach ($item['charms'] as $charm): ?>
+                                                <span class="charm-tag">
+                                                    <?= htmlspecialchars($charm['CHARM_NAME']) ?>
+                                                    <small>(+RM <?= number_format($charm['CHARM_PRICE'], 2) ?>)</small>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <p class="charms-subtotal">Charms Total: RM <?= number_format($item['charms_total'], 2) ?>
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="item-actions">
                                     <form action="cart.php" method="POST" class="qty-form">
                                         <input type="hidden" name="action" value="update_qty">
@@ -389,12 +496,20 @@ $total = $subtotal + $shipping_cost;
                         </div>
 
                         <div class="receipt-body">
-                            <?php foreach ($cart_items as $item): ?>
+                            <?php foreach ($cart_items as $item):
+                                $item_total = ($item['CARTITEM_PRICE'] + $item['charms_total']) * $item['CARTITEM_QUANTITY'];
+                            ?>
                                 <div class="receipt-row">
                                     <span><?= substr($item['ITEM_NAME'], 0, 15) . (strlen($item['ITEM_NAME']) > 15 ? '...' : '') ?>
                                         x<?= $item['CARTITEM_QUANTITY'] ?></span>
-                                    <span><?= number_format($item['CARTITEM_PRICE'] * $item['CARTITEM_QUANTITY'], 2) ?></span>
+                                    <span><?= number_format($item_total, 2) ?></span>
                                 </div>
+                                <?php if (!empty($item['charms'])): ?>
+                                    <div class="receipt-row" style="font-size: 0.65rem; color: #888; padding-left: 10px;">
+                                        <span>+ <?= count($item['charms']) ?> charm(s)</span>
+                                        <span></span>
+                                    </div>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
 
@@ -438,20 +553,6 @@ $total = $subtotal + $shipping_cost;
 
     <?php include 'components/footer.php'; ?>
 
-    <script>
-        function toggleAddressForm() {
-            var form = document.getElementById('addressForm');
-            var display = document.getElementById('displayAddress');
-
-            if (form.style.display === 'none' || form.style.display === '') {
-                form.style.display = 'block';
-                display.style.display = 'none';
-            } else {
-                form.style.display = 'none';
-                display.style.display = 'block';
-            }
-        }
-    </script>
 </body>
 
 </html>

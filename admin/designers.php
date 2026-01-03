@@ -100,10 +100,10 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
             <svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 288 149.67">
                 <defs>
                     <style>
-                    .cls-1 {
-                        fill: #000;
-                        stroke-width: 0px;
-                    }
+                        .cls-1 {
+                            fill: #000;
+                            stroke-width: 0px;
+                        }
                     </style>
                 </defs>
                 <path class="cls-1"
@@ -134,16 +134,28 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
         </div>
         <nav>
             <ul>
-                <li><a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a></li>
-                <li><a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                <li>
+                    <a href="dashboard.php"><i class='bx bxs-dashboard'></i> <span>Dashboard</span></a>
+                </li>
+                <li>
+                    <a href="catalog.php"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="m21.45 11.11-3-1.5-2.68-1.34-.03-.03-1.34-2.68-1.5-3c-.34-.68-1.45-.68-1.79 0l-1.5 3-1.34 2.68-.03.03-2.68 1.34-3 1.5c-.34.17-.55.52-.55.89s.21.72.55.89l3 1.5 2.68 1.34.03.03 1.34 2.68 1.5 3c.17.34.52.55.89.55s.72-.21.89-.55l1.5-3 1.34-2.68.03-.03 2.68-1.34 3-1.5c.34-.17.55-.52.55-.89s-.21-.72-.55-.89ZM19.5 1.5l-.94 2.06-2.06.94 2.06.94.94 2.06.94-2.06 2.06-.94-2.06-.94z">
                             </path>
-                        </svg><span>Items/Catalog</span></a></li>
-                <li><a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a></li>
-                <li><a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a></li>
-                <li class="active"><a href="#"><i class='bx bxs-palette'></i> <span>Designers</span></a></li>
+                        </svg> <span>Items/Catalog</span></a>
+                </li>
+                <li><a href="charms.php"><i class='bx bxs-magic-wand'></i> <span>Charms</span></a></li>
+
+                <li>
+                    <a href="customers.php"><i class='bx bxs-user-circle'></i> <span>Customers</span></a>
+                </li>
+                <li>
+                    <a href="orders.php"><i class='bx bxs-shopping-bags'></i> <span>Orders</span></a>
+                </li>
+                <li class="active">
+                    <a href="designers.php"><i class='bx bxs-palette'></i> <span>Designers</span></a>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -158,11 +170,11 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
         </header>
 
         <?php if (isset($success_msg)): ?>
-        <div class="alert alert-success"><i class='bx bx-check-circle'></i>
-            <?php echo htmlspecialchars($success_msg); ?></div>
+            <div class="alert alert-success"><i class='bx bx-check-circle'></i>
+                <?php echo htmlspecialchars($success_msg); ?></div>
         <?php endif; ?>
         <?php if (isset($error_msg)): ?>
-        <div class="alert alert-error"><i class='bx bx-x-circle'></i> <?php echo htmlspecialchars($error_msg); ?></div>
+            <div class="alert alert-error"><i class='bx bx-x-circle'></i> <?php echo htmlspecialchars($error_msg); ?></div>
         <?php endif; ?>
 
         <div class="stats-grid">
@@ -205,47 +217,47 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
                 </thead>
                 <tbody>
                     <?php if (count($designers) > 0): ?>
-                    <?php foreach ($designers as $d): ?>
-                    <tr>
-                        <td>#<?php echo $d['DESIGNER_ID']; ?></td>
-                        <td><span
-                                style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($d['DESIGNER_NAME']); ?></span>
-                        </td>
-                        <td>
-                            <?php if ($d['item_count'] > 0): ?>
-                            <span class="stock-status stock-medium"
-                                style="background: var(--blue-bg); color: var(--blue-text);"><?php echo $d['item_count']; ?>
-                                Items</span>
-                            <?php else: ?>
-                            <span style="color: var(--text-light);">No items yet</span>
-                            <?php endif; ?>
-                        </td>
-                        <td style="text-align: right;">
-                            <div class="action-buttons" style="justify-content: flex-end;">
-                                <button class="btn-icon" style="background: var(--green-bg); color: var(--green-text);"
-                                    onclick="openItemsModal(<?php echo $d['DESIGNER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($d['DESIGNER_NAME'])); ?>')"
-                                    title="Manage Items & Stock">
-                                    <i class='bx bx-list-ul'></i>
-                                </button>
-                                <button class="btn-icon btn-edit"
-                                    onclick="openModal('edit', <?php echo $d['DESIGNER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($d['DESIGNER_NAME'])); ?>')"
-                                    title="Edit Name">
-                                    <i class='bx bx-edit'></i>
-                                </button>
-                                <button class="btn-icon btn-delete"
-                                    onclick="deleteDesigner(<?php echo $d['DESIGNER_ID']; ?>, <?php echo $d['item_count']; ?>)"
-                                    title="Delete Designer">
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
+                        <?php foreach ($designers as $d): ?>
+                            <tr>
+                                <td>#<?php echo $d['DESIGNER_ID']; ?></td>
+                                <td><span
+                                        style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($d['DESIGNER_NAME']); ?></span>
+                                </td>
+                                <td>
+                                    <?php if ($d['item_count'] > 0): ?>
+                                        <span class="stock-status stock-medium"
+                                            style="background: var(--blue-bg); color: var(--blue-text);"><?php echo $d['item_count']; ?>
+                                            Items</span>
+                                    <?php else: ?>
+                                        <span style="color: var(--text-light);">No items yet</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="action-buttons" style="justify-content: flex-end;">
+                                        <button class="btn-icon" style="background: var(--green-bg); color: var(--green-text);"
+                                            onclick="openItemsModal(<?php echo $d['DESIGNER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($d['DESIGNER_NAME'])); ?>')"
+                                            title="Manage Items & Stock">
+                                            <i class='bx bx-list-ul'></i>
+                                        </button>
+                                        <button class="btn-icon btn-edit"
+                                            onclick="openModal('edit', <?php echo $d['DESIGNER_ID']; ?>, '<?php echo htmlspecialchars(addslashes($d['DESIGNER_NAME'])); ?>')"
+                                            title="Edit Name">
+                                            <i class='bx bx-edit'></i>
+                                        </button>
+                                        <button class="btn-icon btn-delete"
+                                            onclick="deleteDesigner(<?php echo $d['DESIGNER_ID']; ?>, <?php echo $d['item_count']; ?>)"
+                                            title="Delete Designer">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                    <tr>
-                        <td colspan="4" style="text-align:center; padding: 30px;">No designers found. Add one to get
-                            started!</td>
-                    </tr>
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding: 30px;">No designers found. Add one to get
+                                started!</td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -304,65 +316,65 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
     </div>
 
     <script>
-    // --- DESIGNER MODAL ---
-    function openModal(mode, id = null, name = '') {
-        const modal = document.getElementById('designerModal');
-        const title = document.getElementById('modalTitle');
-        const action = document.getElementById('formAction');
-        const dId = document.getElementById('designerId');
-        const dName = document.getElementById('designerName');
+        // --- DESIGNER MODAL ---
+        function openModal(mode, id = null, name = '') {
+            const modal = document.getElementById('designerModal');
+            const title = document.getElementById('modalTitle');
+            const action = document.getElementById('formAction');
+            const dId = document.getElementById('designerId');
+            const dName = document.getElementById('designerName');
 
-        if (mode === 'edit') {
-            title.innerText = 'Edit Designer';
-            action.value = 'edit_designer';
-            dId.value = id;
-            dName.value = name;
-        } else {
-            title.innerText = 'Add New Designer';
-            action.value = 'add_designer';
-            dId.value = '';
-            dName.value = '';
+            if (mode === 'edit') {
+                title.innerText = 'Edit Designer';
+                action.value = 'edit_designer';
+                dId.value = id;
+                dName.value = name;
+            } else {
+                title.innerText = 'Add New Designer';
+                action.value = 'add_designer';
+                dId.value = '';
+                dName.value = '';
+            }
+            modal.classList.add('active');
         }
-        modal.classList.add('active');
-    }
 
-    // --- ITEMS & STOCK MODAL ---
-    function openItemsModal(designerId, designerName) {
-        const modal = document.getElementById('itemsModal');
-        const title = document.getElementById('itemsModalTitle');
-        const loader = document.getElementById('itemsLoading');
-        const body = document.getElementById('itemsBody');
-        const list = document.getElementById('itemsList');
-        const noMsg = document.getElementById('noItemsMsg');
+        // --- ITEMS & STOCK MODAL ---
+        function openItemsModal(designerId, designerName) {
+            const modal = document.getElementById('itemsModal');
+            const title = document.getElementById('itemsModalTitle');
+            const loader = document.getElementById('itemsLoading');
+            const body = document.getElementById('itemsBody');
+            const list = document.getElementById('itemsList');
+            const noMsg = document.getElementById('noItemsMsg');
 
-        title.innerText = `Items by ${designerName}`;
-        modal.classList.add('active');
-        loader.style.display = 'block';
-        body.style.display = 'none';
+            title.innerText = `Items by ${designerName}`;
+            modal.classList.add('active');
+            loader.style.display = 'block';
+            body.style.display = 'none';
 
-        // Fetch Items
-        fetch(`api/get-designer-items.php?id=${designerId}`)
-            .then(res => res.json())
-            .then(data => {
-                loader.style.display = 'none';
-                body.style.display = 'block';
-                list.innerHTML = '';
+            // Fetch Items
+            fetch(`api/get-designer-items.php?id=${designerId}`)
+                .then(res => res.json())
+                .then(data => {
+                    loader.style.display = 'none';
+                    body.style.display = 'block';
+                    list.innerHTML = '';
 
-                if (data.length > 0) {
-                    noMsg.style.display = 'none';
-                    data.forEach(item => {
-                        // --- FIX: PATH CORRECTION LOGIC START ---
-                        let imgPath = '../assets/img/no-img.png'; // Default
-                        if (item.ITEM_IMAGE) {
-                            // 1. Remove leading slash: /images/products/foo.jpg -> images/products/foo.jpg
-                            const cleanPath = item.ITEM_IMAGE.replace(/^\//, '');
-                            // 2. Prepend ../ to go up from 'admin' to 'root'
-                            imgPath = '../' + cleanPath;
-                        }
-                        // --- FIX: PATH CORRECTION LOGIC END ---
+                    if (data.length > 0) {
+                        noMsg.style.display = 'none';
+                        data.forEach(item => {
+                            // --- FIX: PATH CORRECTION LOGIC START ---
+                            let imgPath = '../assets/img/no-img.png'; // Default
+                            if (item.ITEM_IMAGE) {
+                                // 1. Remove leading slash: /images/products/foo.jpg -> images/products/foo.jpg
+                                const cleanPath = item.ITEM_IMAGE.replace(/^\//, '');
+                                // 2. Prepend ../ to go up from 'admin' to 'root'
+                                imgPath = '../' + cleanPath;
+                            }
+                            // --- FIX: PATH CORRECTION LOGIC END ---
 
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
                             <td>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <img src="${imgPath}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
@@ -381,85 +393,85 @@ $total_items_linked = array_sum(array_column($designers, 'item_count'));
                                 </button>
                             </td>
                         `;
-                        list.appendChild(row);
-                    });
-                } else {
-                    noMsg.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Failed to load items.");
-                closeModal('itemsModal');
-            });
-    }
+                            list.appendChild(row);
+                        });
+                    } else {
+                        noMsg.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Failed to load items.");
+                    closeModal('itemsModal');
+                });
+        }
 
-    function updateStock(itemId) {
-        const input = document.getElementById(`stock-${itemId}`);
-        const newStock = input.value;
-        const btn = input.parentElement.nextElementSibling.querySelector('button');
+        function updateStock(itemId) {
+            const input = document.getElementById(`stock-${itemId}`);
+            const newStock = input.value;
+            const btn = input.parentElement.nextElementSibling.querySelector('button');
 
-        const originalText = btn.innerText;
-        btn.innerText = '...';
-        btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = '...';
+            btn.disabled = true;
 
-        fetch('api/update-stock.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `item_id=${itemId}&stock=${newStock}`
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    btn.style.background = 'var(--green-bg)';
-                    btn.style.color = 'var(--green-text)';
-                    btn.innerText = 'Saved!';
-                    setTimeout(() => {
-                        btn.style.background = '';
-                        btn.style.color = 'white';
+            fetch('api/update-stock.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `item_id=${itemId}&stock=${newStock}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        btn.style.background = 'var(--green-bg)';
+                        btn.style.color = 'var(--green-text)';
+                        btn.innerText = 'Saved!';
+                        setTimeout(() => {
+                            btn.style.background = '';
+                            btn.style.color = 'white';
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        }, 1500);
+                    } else {
+                        alert(data.error || 'Update failed');
                         btn.innerText = originalText;
                         btn.disabled = false;
-                    }, 1500);
-                } else {
-                    alert(data.error || 'Update failed');
+                    }
+                })
+                .catch(err => {
+                    alert('Error updating stock');
                     btn.innerText = originalText;
                     btn.disabled = false;
-                }
-            })
-            .catch(err => {
-                alert('Error updating stock');
-                btn.innerText = originalText;
-                btn.disabled = false;
-            });
-    }
-
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-    }
-
-    function deleteDesigner(id, itemCount) {
-        if (itemCount > 0) {
-            alert("Cannot delete this designer because they still have products. Please delete items first.");
-            return;
+                });
         }
-        if (confirm("Are you sure you want to delete this designer?")) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.innerHTML =
-                `<input type="hidden" name="action" value="delete_designer"><input type="hidden" name="designer_id" value="${id}">`;
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
 
-    // Outside click closes modal
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.classList.remove('active');
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
-    }
+
+        function deleteDesigner(id, itemCount) {
+            if (itemCount > 0) {
+                alert("Cannot delete this designer because they still have products. Please delete items first.");
+                return;
+            }
+            if (confirm("Are you sure you want to delete this designer?")) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML =
+                    `<input type="hidden" name="action" value="delete_designer"><input type="hidden" name="designer_id" value="${id}">`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Outside click closes modal
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
     </script>
 
 </body>
